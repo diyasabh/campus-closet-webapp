@@ -1,0 +1,59 @@
+import { Card, CardContent, CardFooter } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import Link from "next/link"
+import { HeroButton } from "@/components/ui/hero-button"
+
+interface ClothingItem {
+  id: number
+  name: string
+  brand: string
+  size: string
+  price: number
+  deposit: number
+  image: string
+  owner: string
+}
+
+interface ClothingCardProps {
+  item: ClothingItem
+}
+
+export default function ClothingCard({ item }: ClothingCardProps) {
+  return (
+    <Card className="overflow-hidden transition-all group border-black">
+      <div className="aspect-[3/4] relative overflow-hidden">
+        <img
+          src={item.image || "/placeholder.svg"}
+          alt={item.name}
+          className="w-full h-full object-cover transition-transform group-hover:scale-105 duration-300"
+        />
+        <Badge variant="accent" className="absolute top-2 right-2">
+          Size {item.size}
+        </Badge>
+      </div>
+
+      <CardContent className="pt-4">
+        <div className="flex justify-between items-start mb-2">
+          <div>
+            <h3 className="font-serif font-semibold text-lg text-black">{item.name}</h3>
+            <p className="text-sm text-black">{item.brand}</p>
+          </div>
+          <div className="text-right">
+            <p className="font-serif font-bold text-black">${item.price}/day</p>
+            <p className="text-xs text-black">${item.deposit} deposit</p>
+          </div>
+        </div>
+
+        <p className="text-sm text-black mt-2 dot-indicator">Listed by {item.owner}</p>
+      </CardContent>
+
+      <CardFooter className="pt-0">
+        <Link href={`/item/${item.id}`} className="w-full">
+          <HeroButton className="w-full" variant="default" size="sm">
+            View Details
+          </HeroButton>
+        </Link>
+      </CardFooter>
+    </Card>
+  )
+}
