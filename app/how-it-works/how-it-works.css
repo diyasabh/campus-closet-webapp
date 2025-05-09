@@ -1,0 +1,111 @@
+/* Hero Section */
+.hero-section {
+  @apply text-center mb-16;
+}
+
+.hero-title {
+  @apply font-serif text-4xl md:text-5xl font-bold mb-6;
+}
+
+.hero-description {
+  @apply text-lg text-gray-600 max-w-2xl mx-auto;
+}
+
+/* Main Steps */
+.steps-grid {
+  @apply grid md:grid-cols-3 gap-8 mb-16;
+}
+
+.step-card {
+  @apply bg-white p-8 rounded-xl shadow-sm border;
+}
+
+.step-number {
+  @apply w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mb-4;
+}
+
+.step-number-text {
+  @apply text-[#8c1515] font-bold text-xl;
+}
+
+.step-title {
+  @apply font-serif text-xl font-semibold mb-4;
+}
+
+.step-description {
+  @apply text-gray-600 mb-4;
+}
+
+.step-list {
+  @apply text-gray-600 space-y-2;
+}
+
+.step-list-item {
+  @apply flex items-center gap-2;
+}
+
+.step-icon {
+  @apply h-4 w-4 text-[#8c1515];
+}
+
+/* Additional Information */
+.info-grid {
+  @apply grid md:grid-cols-2 gap-8 mb-16;
+}
+
+.info-card {
+  @apply bg-white p-8 rounded-xl shadow-sm border;
+}
+
+.info-title {
+  @apply font-serif text-xl font-semibold mb-4;
+}
+
+.info-list {
+  @apply text-gray-600 space-y-3;
+}
+
+.info-list-item {
+  @apply flex items-start gap-2;
+}
+
+.info-icon {
+  @apply h-5 w-5 text-[#8c1515] mt-0.5;
+}
+
+.info-item-title {
+  @apply font-medium;
+}
+
+.info-item-description {
+  @apply text-sm;
+}
+
+/* Call to Action */
+.cta-section {
+  @apply text-center;
+}
+
+.cta-container {
+  @apply space-y-4;
+}
+
+.cta-title {
+  @apply font-serif text-2xl font-semibold;
+}
+
+.cta-description {
+  @apply text-gray-600;
+}
+
+.cta-buttons {
+  @apply flex flex-wrap justify-center gap-4;
+}
+
+.cta-button-primary {
+  @apply bg-[#8c1515] hover:bg-[#6f1111] text-white;
+}
+
+.cta-button-secondary {
+  @apply border-[#8c1515] text-[#8c1515] hover:bg-[#8c1515]/5;
+} 
