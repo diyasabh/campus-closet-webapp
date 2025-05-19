@@ -1,15 +1,26 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Slider } from "@/components/ui/slider"
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
-import { Label } from "@/components/ui/label"
-import { Checkbox } from "@/components/ui/checkbox"
-import ClothingCard from "@/components/clothing-card"
-import { Filter, SlidersHorizontal, SearchIcon } from "lucide-react"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Slider } from "@/components/ui/slider";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import ClothingCard from "@/components/clothing-card";
+import { Filter, SlidersHorizontal, SearchIcon } from "lucide-react";
 
 // Sample data for demonstration - expanded with more items
 const SAMPLE_ITEMS = [
@@ -145,45 +156,118 @@ const SAMPLE_ITEMS = [
     image: "/placeholder.svg?height=400&width=300",
     owner: "Ethan M.",
   },
-]
+  {
+    id: 13,
+    name: "Designer Handbag",
+    brand: "Kate Spade",
+    size: "One Size",
+    category: "accessories",
+    price: 25,
+    deposit: 200,
+    image: "/placeholder.svg?height=400&width=300",
+    owner: "Sarah M.",
+  },
+  {
+    id: 14,
+    name: "Roberto Cavalli Archival Zebra Midi Dress",
+    brand: "Roberto Cavalli",
+    size: "XS/S",
+    category: "Midi Dresses",
+    price: 75,
+    deposit: 100,
+    image: "/images/roberto-cavalli-zebra-midi.jpg",
+    owner: "Diya Sabharwal",
+    condition: "Excellent",
+    note: "$100 deposit, $75/day",
+    sold: true,
+  },
+  {
+    id: 15,
+    name: "Sequin Skirt",
+    brand: "Unknown",
+    size: "S",
+    category: "Going out",
+    itemType: "Skirt",
+    price: 7,
+    deposit: 10,
+    image: "/images/diya-sabharwal-sequin-skirt.jpg",
+    owner: "Diya Sabharwal",
+    condition: "Excellent",
+  },
+  {
+    id: 16,
+    name: "Red Mini Dress",
+    brand: "Windsor",
+    size: "S",
+    category: "Going Out",
+    itemType: "Dress",
+    price: 3,
+    deposit: 10,
+    image: "/images/red-mini-dress-diya.jpg",
+    owner: "Diya Sabharwal",
+    condition: "Like New (worn once)",
+  },
+  {
+    id: 17,
+    name: "Unique Indian Headpiece",
+    brand: "locally sourced",
+    size: "N/A",
+    category: "Going Out, Formalwear",
+    itemType: "Jewellry",
+    price: 5,
+    deposit: 5,
+    image: "/images/yesterday3.jpg",
+    owner: "Diya Sabharwal",
+    condition: "Like New",
+  },
+];
 
 export default function BrowsePage() {
-  const [searchTerm, setSearchTerm] = useState("")
-  const [sizeFilter, setSizeFilter] = useState("")
-  const [categoryFilter, setCategoryFilter] = useState("")
-  const [priceRange, setPriceRange] = useState([0, 30])
-  const [showFilters, setShowFilters] = useState(false)
-  const [sortBy, setSortBy] = useState("newest")
-  const [visibleItems, setVisibleItems] = useState(6)
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sizeFilter, setSizeFilter] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("");
+  const [priceRange, setPriceRange] = useState([0, 150]);
+  const [showFilters, setShowFilters] = useState(false);
+  const [sortBy, setSortBy] = useState("newest");
+  const [visibleItems, setVisibleItems] = useState(6);
 
   const filteredItems = SAMPLE_ITEMS.filter((item) => {
     const matchesSearch =
       item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.brand.toLowerCase().includes(searchTerm.toLowerCase())
+      item.brand.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesSize = sizeFilter === "" || item.size === sizeFilter
-    const matchesCategory = categoryFilter === "" || item.category === categoryFilter
-    const matchesPrice = item.price >= priceRange[0] && item.price <= priceRange[1]
+    const matchesSize = sizeFilter === "" || item.size === sizeFilter;
+    const matchesCategory =
+      categoryFilter === "" || item.category === categoryFilter;
+    const matchesPrice =
+      item.price >= priceRange[0] && item.price <= priceRange[1];
 
-    return matchesSearch && matchesSize && matchesCategory && matchesPrice
+    return matchesSearch && matchesSize && matchesCategory && matchesPrice;
   }).sort((a, b) => {
-    if (sortBy === "price-low") return a.price - b.price
-    if (sortBy === "price-high") return b.price - a.price
+    if (sortBy === "price-low") return a.price - b.price;
+    if (sortBy === "price-high") return b.price - a.price;
     // Default to newest (by id in this demo)
-    return b.id - a.id
-  })
+    return b.id - a.id;
+  });
 
   const loadMore = () => {
-    setVisibleItems((prev) => Math.min(prev + 6, filteredItems.length))
-  }
+    setVisibleItems((prev) => Math.min(prev + 6, filteredItems.length));
+  };
 
   return (
     <main className="max-w-6xl mx-auto py-8 px-4">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
-        <h1 className="font-serif text-3xl font-bold mb-4 md:mb-0 text-black">Browse Clothing</h1>
+        <h1 className="font-serif text-3xl font-bold mb-4 md:mb-0 text-black">
+          Browse Clothing
+        </h1>
 
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="md:hidden" onClick={() => setShowFilters(!showFilters)}>
+          <Button
+            variant="outline"
+            size="sm"
+            className="md:hidden"
+            onClick={() => setShowFilters(!showFilters)}
+          >
             <Filter className="h-4 w-4 mr-2" />
             Filters
           </Button>
@@ -203,11 +287,22 @@ export default function BrowsePage() {
 
       <div className="flex flex-col md:flex-row gap-6">
         {/* Filters - Desktop (always visible) and Mobile (toggleable) */}
-        <div className={`w-full md:w-64 flex-shrink-0 ${showFilters ? "block" : "hidden md:block"}`}>
+        <div
+          className={`w-full md:w-64 flex-shrink-0 ${
+            showFilters ? "block" : "hidden md:block"
+          }`}
+        >
           <div className="bg-white p-4 rounded-lg border mb-4">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="font-serif font-semibold text-lg text-black">Filters</h2>
-              <Button variant="ghost" size="sm" className="md:hidden" onClick={() => setShowFilters(false)}>
+              <h2 className="font-serif font-semibold text-lg text-black">
+                Filters
+              </h2>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="md:hidden"
+                onClick={() => setShowFilters(false)}
+              >
                 <SlidersHorizontal className="h-4 w-4" />
               </Button>
             </div>
@@ -253,7 +348,10 @@ export default function BrowsePage() {
                         checked={categoryFilter === "outerwear"}
                         onCheckedChange={() => setCategoryFilter("outerwear")}
                       />
-                      <Label htmlFor="category-outerwear" className="text-black">
+                      <Label
+                        htmlFor="category-outerwear"
+                        className="text-black"
+                      >
                         Outerwear
                       </Label>
                     </div>
@@ -276,7 +374,11 @@ export default function BrowsePage() {
                 <AccordionContent>
                   <div className="space-y-2">
                     <div className="flex items-center space-x-2">
-                      <Checkbox id="size-all" checked={sizeFilter === ""} onCheckedChange={() => setSizeFilter("")} />
+                      <Checkbox
+                        id="size-all"
+                        checked={sizeFilter === ""}
+                        onCheckedChange={() => setSizeFilter("")}
+                      />
                       <Label htmlFor="size-all" className="text-black">
                         All Sizes
                       </Label>
@@ -292,19 +394,31 @@ export default function BrowsePage() {
                       </Label>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <Checkbox id="size-s" checked={sizeFilter === "S"} onCheckedChange={() => setSizeFilter("S")} />
+                      <Checkbox
+                        id="size-s"
+                        checked={sizeFilter === "S"}
+                        onCheckedChange={() => setSizeFilter("S")}
+                      />
                       <Label htmlFor="size-s" className="text-black">
                         S
                       </Label>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <Checkbox id="size-m" checked={sizeFilter === "M"} onCheckedChange={() => setSizeFilter("M")} />
+                      <Checkbox
+                        id="size-m"
+                        checked={sizeFilter === "M"}
+                        onCheckedChange={() => setSizeFilter("M")}
+                      />
                       <Label htmlFor="size-m" className="text-black">
                         M
                       </Label>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <Checkbox id="size-l" checked={sizeFilter === "L"} onCheckedChange={() => setSizeFilter("L")} />
+                      <Checkbox
+                        id="size-l"
+                        checked={sizeFilter === "L"}
+                        onCheckedChange={() => setSizeFilter("L")}
+                      />
                       <Label htmlFor="size-l" className="text-black">
                         L
                       </Label>
@@ -328,8 +442,8 @@ export default function BrowsePage() {
                 <AccordionContent>
                   <div className="space-y-4">
                     <Slider
-                      defaultValue={[0, 30]}
-                      max={30}
+                      defaultValue={[0, 150]}
+                      max={150}
                       step={1}
                       value={priceRange}
                       onValueChange={setPriceRange}
@@ -350,10 +464,10 @@ export default function BrowsePage() {
                 size="sm"
                 className="w-full"
                 onClick={() => {
-                  setSearchTerm("")
-                  setSizeFilter("")
-                  setCategoryFilter("")
-                  setPriceRange([0, 30])
+                  setSearchTerm("");
+                  setSizeFilter("");
+                  setCategoryFilter("");
+                  setPriceRange([0, 150]);
                 }}
               >
                 Reset Filters
@@ -377,7 +491,8 @@ export default function BrowsePage() {
 
           {/* Results Count */}
           <p className="text-sm text-black mb-4">
-            Showing {Math.min(visibleItems, filteredItems.length)} of {filteredItems.length} items
+            Showing {Math.min(visibleItems, filteredItems.length)} of{" "}
+            {filteredItems.length} items
           </p>
 
           {/* Items Grid */}
@@ -389,15 +504,17 @@ export default function BrowsePage() {
             </div>
           ) : (
             <div className="text-center py-12">
-              <p className="text-lg text-black">No items match your search criteria</p>
+              <p className="text-lg text-black">
+                No items match your search criteria
+              </p>
               <Button
                 variant="outline"
                 className="mt-4"
                 onClick={() => {
-                  setSearchTerm("")
-                  setSizeFilter("")
-                  setCategoryFilter("")
-                  setPriceRange([0, 30])
+                  setSearchTerm("");
+                  setSizeFilter("");
+                  setCategoryFilter("");
+                  setPriceRange([0, 150]);
                 }}
               >
                 Clear Filters
@@ -416,5 +533,5 @@ export default function BrowsePage() {
         </div>
       </div>
     </main>
-  )
+  );
 }
