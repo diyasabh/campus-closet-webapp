@@ -226,7 +226,7 @@ export default function BrowsePage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [sizeFilter, setSizeFilter] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
-  const [priceRange, setPriceRange] = useState([0, 150]);
+  const [priceRange, setPriceRange] = useState([0, 100]);
   const [showFilters, setShowFilters] = useState(false);
   const [sortBy, setSortBy] = useState("newest");
   const [visibleItems, setVisibleItems] = useState(6);
@@ -442,8 +442,8 @@ export default function BrowsePage() {
                 <AccordionContent>
                   <div className="space-y-4">
                     <Slider
-                      defaultValue={[0, 150]}
-                      max={150}
+                      defaultValue={[0, 100]}
+                      max={100}
                       step={1}
                       value={priceRange}
                       onValueChange={setPriceRange}
@@ -467,7 +467,7 @@ export default function BrowsePage() {
                   setSearchTerm("");
                   setSizeFilter("");
                   setCategoryFilter("");
-                  setPriceRange([0, 150]);
+                  setPriceRange([0, 100]);
                 }}
               >
                 Reset Filters
@@ -514,7 +514,7 @@ export default function BrowsePage() {
                   setSearchTerm("");
                   setSizeFilter("");
                   setCategoryFilter("");
-                  setPriceRange([0, 150]);
+                  setPriceRange([0, 100]);
                 }}
               >
                 Clear Filters
