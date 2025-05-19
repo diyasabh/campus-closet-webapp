@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
+import { supabase } from "@/lib/supabase"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -155,27 +156,43 @@ export default function BrowsePage() {
   const [showFilters, setShowFilters] = useState(false)
   const [sortBy, setSortBy] = useState("newest")
   const [visibleItems, setVisibleItems] = useState(6)
+  const [items, setItems] = useState<any[]>([])
 
-  const filteredItems = SAMPLE_ITEMS.filter((item) => {
+  useEffect(() => {
+    const fetchListings = async () => {
+      const { data, error } = await supabase
+        .from("listing")
+        .select("*")
+        .order("id", { ascending: false })
+
+      if (error) {
+        console.error("Error fetching listings:", error.message)
+      } else {
+        setItems(data)
+      }
+    }
+
+    fetchListings()
+  }, [])
+
+  const filteredItems = items.filter((item) => {
     const matchesSearch =
+      searchTerm === "" ||
       item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.brand.toLowerCase().includes(searchTerm.toLowerCase())
+      item.brand.toLowerCase().includes(searchTerm.toLowerCase());
+  
+    const matchesSize = sizeFilter === "" || item.size === sizeFilter;
+ 
+    const matchesCategory = categoryFilter === "" || item.category === categoryFilter;
+  
+    const matchesPrice = Number(item.fee) >= priceRange[0] && Number(item.fee) <= priceRange[1];
 
-    const matchesSize = sizeFilter === "" || item.size === sizeFilter
-    const matchesCategory = categoryFilter === "" || item.category === categoryFilter
-    const matchesPrice = item.price >= priceRange[0] && item.price <= priceRange[1]
-
-    return matchesSearch && matchesSize && matchesCategory && matchesPrice
-  }).sort((a, b) => {
-    if (sortBy === "price-low") return a.price - b.price
-    if (sortBy === "price-high") return b.price - a.price
-    // Default to newest (by id in this demo)
-    return b.id - a.id
-  })
+    return matchesSearch && matchesSize && matchesCategory && matchesPrice;
+  });
 
   const loadMore = () => {
-    setVisibleItems((prev) => Math.min(prev + 6, filteredItems.length))
-  }
+    setVisibleItems((prev) => Math.min(prev + 6, filteredItems.length));
+  };
 
   return (
     <main className="max-w-6xl mx-auto py-8 px-4">
