@@ -156,13 +156,77 @@ const SAMPLE_ITEMS = [
     image: "/placeholder.svg?height=400&width=300",
     owner: "Ethan M.",
   },
+  {
+    id: 13,
+    name: "Designer Handbag",
+    brand: "Kate Spade",
+    size: "One Size",
+    category: "accessories",
+    price: 25,
+    deposit: 200,
+    image: "/placeholder.svg?height=400&width=300",
+    owner: "Sarah M.",
+  },
+  {
+    id: 14,
+    name: "Roberto Cavalli Archival Zebra Midi Dress",
+    brand: "Roberto Cavalli",
+    size: "XS/S",
+    category: "Midi Dresses",
+    price: 75,
+    deposit: 100,
+    image: "/images/roberto-cavalli-zebra-midi.jpg",
+    owner: "Diya Sabharwal",
+    condition: "Excellent",
+    note: "$100 deposit, $75/day",
+    sold: true,
+  },
+  {
+    id: 15,
+    name: "Sequin Skirt",
+    brand: "Unknown",
+    size: "S",
+    category: "Going out",
+    itemType: "Skirt",
+    price: 7,
+    deposit: 10,
+    image: "/images/diya-sabharwal-sequin-skirt.jpg",
+    owner: "Diya Sabharwal",
+    condition: "Excellent",
+  },
+  {
+    id: 16,
+    name: "Red Mini Dress",
+    brand: "Windsor",
+    size: "S",
+    category: "Going Out",
+    itemType: "Dress",
+    price: 3,
+    deposit: 10,
+    image: "/images/red-mini-dress-diya.jpg",
+    owner: "Diya Sabharwal",
+    condition: "Like New (worn once)",
+  },
+  {
+    id: 17,
+    name: "Unique Indian Headpiece",
+    brand: "locally sourced",
+    size: "N/A",
+    category: "Going Out, Formalwear",
+    itemType: "Jewellry",
+    price: 5,
+    deposit: 5,
+    image: "/images/yesterday3.jpg",
+    owner: "Diya Sabharwal",
+    condition: "Like New",
+  },
 ];
 
 export default function BrowsePage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [sizeFilter, setSizeFilter] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
-  const [priceRange, setPriceRange] = useState([0, 30]);
+  const [priceRange, setPriceRange] = useState([0, 150]);
   const [showFilters, setShowFilters] = useState(false);
   const [sortBy, setSortBy] = useState("newest");
   const [visibleItems, setVisibleItems] = useState(6);
@@ -378,8 +442,8 @@ export default function BrowsePage() {
                 <AccordionContent>
                   <div className="space-y-4">
                     <Slider
-                      defaultValue={[0, 30]}
-                      max={30}
+                      defaultValue={[0, 150]}
+                      max={150}
                       step={1}
                       value={priceRange}
                       onValueChange={setPriceRange}
@@ -403,7 +467,7 @@ export default function BrowsePage() {
                   setSearchTerm("");
                   setSizeFilter("");
                   setCategoryFilter("");
-                  setPriceRange([0, 30]);
+                  setPriceRange([0, 150]);
                 }}
               >
                 Reset Filters
@@ -450,7 +514,7 @@ export default function BrowsePage() {
                   setSearchTerm("");
                   setSizeFilter("");
                   setCategoryFilter("");
-                  setPriceRange([0, 30]);
+                  setPriceRange([0, 150]);
                 }}
               >
                 Clear Filters

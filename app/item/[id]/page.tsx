@@ -1,10 +1,10 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Calendar, MapPin, User, Clock, Shield } from "lucide-react"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Calendar, MapPin, User, Clock, Shield } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // This would come from a database in a real app
 const ITEM = {
@@ -27,10 +27,10 @@ const ITEM = {
     rating: 4.8,
     responseTime: "Within 2 hours",
   },
-}
+};
 
 export default function ItemDetailPage({ params }: { params: { id: string } }) {
-  const [selectedImage, setSelectedImage] = useState(0)
+  const [selectedImage, setSelectedImage] = useState(0);
 
   return (
     <main className="max-w-6xl mx-auto py-12 px-4">
@@ -51,7 +51,9 @@ export default function ItemDetailPage({ params }: { params: { id: string } }) {
                 key={index}
                 onClick={() => setSelectedImage(index)}
                 className={`flex-shrink-0 w-20 h-20 rounded-md overflow-hidden border-2 ${
-                  selectedImage === index ? "border-[#8c1515]" : "border-transparent"
+                  selectedImage === index
+                    ? "border-[#8c1515]"
+                    : "border-transparent"
                 }`}
               >
                 <img
@@ -79,7 +81,9 @@ export default function ItemDetailPage({ params }: { params: { id: string } }) {
                 ${ITEM.price}
                 <span className="text-sm font-normal text-gray-500">/day</span>
               </p>
-              <p className="text-sm text-gray-500">${ITEM.deposit} security deposit</p>
+              <p className="text-sm text-gray-500">
+                ${ITEM.deposit} security deposit
+              </p>
             </div>
 
             <div className="flex items-center gap-2">
@@ -161,14 +165,22 @@ export default function ItemDetailPage({ params }: { params: { id: string } }) {
               <div className="flex items-center gap-4">
                 <div className="w-16 h-16 rounded-full bg-gray-200"></div>
                 <div>
-                  <p className="font-serif font-medium text-lg">{ITEM.owner.name}</p>
-                  <p className="text-sm text-gray-500">Stanford '25 · Computer Science</p>
+                  <p className="font-serif font-medium text-lg">
+                    {ITEM.owner.name}
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    Stanford '25 · Computer Science
+                  </p>
                   <div className="flex items-center gap-1 mt-1">
                     <div className="flex">
                       {[...Array(5)].map((_, i) => (
                         <svg
                           key={i}
-                          className={`w-4 h-4 ${i < Math.floor(ITEM.owner.rating) ? "text-yellow-400" : "text-gray-300"}`}
+                          className={`w-4 h-4 ${
+                            i < Math.floor(ITEM.owner.rating)
+                              ? "text-yellow-400"
+                              : "text-gray-300"
+                          }`}
                           fill="currentColor"
                           viewBox="0 0 20 20"
                         >
@@ -176,7 +188,9 @@ export default function ItemDetailPage({ params }: { params: { id: string } }) {
                         </svg>
                       ))}
                     </div>
-                    <span className="text-sm text-gray-500">{ITEM.owner.rating} rating</span>
+                    <span className="text-sm text-gray-500">
+                      {ITEM.owner.rating} rating
+                    </span>
                   </div>
                 </div>
               </div>
@@ -187,17 +201,21 @@ export default function ItemDetailPage({ params }: { params: { id: string } }) {
                 </div>
                 <div>
                   <p className="font-medium">Response Time</p>
-                  <p className="text-sm text-gray-500">{ITEM.owner.responseTime}</p>
+                  <p className="text-sm text-gray-500">
+                    {ITEM.owner.responseTime}
+                  </p>
                 </div>
               </div>
             </TabsContent>
           </Tabs>
 
           <div className="pt-6">
-            <Button className="w-full bg-[#8c1515] hover:bg-[#6f1111] text-white">Rent This Item</Button>
+            <Button className="w-full bg-[#8c1515] hover:bg-[#6f1111] text-white">
+              Rent This Item
+            </Button>
           </div>
         </div>
       </div>
     </main>
-  )
+  );
 }
