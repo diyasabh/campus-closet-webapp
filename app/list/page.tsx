@@ -11,10 +11,22 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Upload, User, Info } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
+import { supabase } from "@/lib/supabase"
 
 export default function ListItemPage() {
   const [images, setImages] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
+  const [formData, setFormData] = useState({
+    name: "",
+    brand: "",
+    size: "",
+    category: "",
+    fee: "",
+    deposit: "",
+    description: "",
+    photo: ""
+  })
+  
 
   // Mock user data - in a real app, this would come from authentication
   const userData = {
@@ -35,10 +47,42 @@ export default function ListItemPage() {
     }, 1000)
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // In a real app, this would submit the form data to the server
-    alert("Your item has been listed successfully!")
+    setLoading(true)
+  
+    const { error } = await supabase.from("listing").insert([
+      {
+        name: formData.name,
+        brand: formData.brand,
+        size: formData.size,
+        category: formData.category,
+        fee: Number(formData.fee),
+        deposit: Number(formData.deposit),
+        description: formData.description,
+        photo: images
+      },
+    ])
+  
+    setLoading(false)
+  
+    if (error) {
+      console.error("Insert error:", error)
+      alert("There was an error listing your item.")
+    } else {
+      alert("Your item was listed successfully!")
+      setFormData({
+        name: "",
+        brand: "",
+        size: "",
+        category: "",
+        fee: "",
+        deposit: "",
+        description: "",
+        photo: ""
+      })
+      setImages([])
+    }
   }
 
   return (
@@ -58,17 +102,17 @@ export default function ListItemPage() {
                 <div className="grid md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <Label htmlFor="name">Item Name</Label>
-                    <Input id="name" placeholder="e.g., Black Formal Dress" required />
+                    <Input id="name" value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} placeholder="e.g., Black Formal Dress" required />
                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="brand">Brand</Label>
-                    <Input id="brand" placeholder="e.g., Zara, H&M, etc." required />
+                    <Input id="brand" value={formData.brand} onChange={(e) => setFormData({ ...formData, brand: e.target.value })} placeholder="e.g., Zara, H&M, etc." required />
                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="size">Size</Label>
-                    <Select required>
+                    <Select id="size" value={formData.size} onValueChange={(value) => setFormData({ ...formData, size: value })} required>
                       <SelectTrigger id="size">
                         <SelectValue placeholder="Select size" />
                       </SelectTrigger>
@@ -84,7 +128,7 @@ export default function ListItemPage() {
 
                   <div className="space-y-2">
                     <Label htmlFor="category">Category</Label>
-                    <Select required>
+                    <Select id="category" value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })} required>
                       <SelectTrigger id="category">
                         <SelectValue placeholder="Select category" />
                       </SelectTrigger>
@@ -100,12 +144,12 @@ export default function ListItemPage() {
 
                   <div className="space-y-2">
                     <Label htmlFor="rental-fee">Rental Fee ($ per day)</Label>
-                    <Input id="rental-fee" type="number" min="1" step="1" required />
+                    <Input id="rental-fee" value={formData.fee} onChange={(e) => setFormData({ ...formData, fee: e.target.value })} type="number" min="1" step="1" required />
                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="deposit">Security Deposit ($)</Label>
-                    <Input id="deposit" type="number" min="10" step="5" required />
+                    <Input id="deposit" value={formData.deposit} onChange={(e) => setFormData({ ...formData, deposit: e.target.value })} type="number" min="10" step="5" required />
                   </div>
                 </div>
 
@@ -113,6 +157,8 @@ export default function ListItemPage() {
                   <Label htmlFor="description">Description</Label>
                   <Textarea
                     id="description"
+                    value={formData.description} 
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     placeholder="Describe your item, including condition, fit, and any other relevant details."
                     rows={4}
                     required
@@ -121,6 +167,12 @@ export default function ListItemPage() {
 
                 <div className="space-y-2">
                   <Label>Photos</Label>
+                  <Input
+                    type="text"
+                    value={formData.photo || ""}
+                    onChange={(e) => setFormData({ ...formData, photo: e.target.value })}
+                    placeholder="Enter photo URL"
+                  />
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                     {images.map((img, index) => (
                       <div key={index} className="aspect-square rounded-md overflow-hidden border">
