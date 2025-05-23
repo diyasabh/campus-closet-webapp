@@ -51,7 +51,7 @@ export default function ClothingCard({ item }: ClothingCardProps) {
             <p className="text-sm text-black">{item.brand}</p>
           </div>
           <div className="text-right">
-            <p className="font-serif font-bold text-black">${item.price}/day</p>
+            <p className="font-serif font-bold text-black">${item.fee}/day</p>
             <p className="text-xs text-black">${item.deposit} deposit</p>
           </div>
         </div>

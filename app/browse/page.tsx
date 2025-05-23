@@ -1,26 +1,16 @@
 "use client";
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Slider } from "@/components/ui/slider";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
-import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
-import ClothingCard from "@/components/clothing-card";
-import { Filter, SlidersHorizontal, SearchIcon } from "lucide-react";
+import { useEffect, useState } from "react"
+import { supabase } from "@/lib/supabase"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Slider } from "@/components/ui/slider"
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
+import { Label } from "@/components/ui/label"
+import { Checkbox } from "@/components/ui/checkbox"
+import ClothingCard from "@/components/clothing-card"
+import { Filter, SlidersHorizontal, SearchIcon } from "lucide-react"
 
 // Sample data for demonstration - expanded with more items
 const SAMPLE_ITEMS = [
@@ -259,31 +249,45 @@ const SAMPLE_ITEMS = [
 ];
 
 export default function BrowsePage() {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [sizeFilter, setSizeFilter] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("");
-  const [priceRange, setPriceRange] = useState([0, 100]);
-  const [showFilters, setShowFilters] = useState(false);
-  const [sortBy, setSortBy] = useState("newest");
-  const [visibleItems, setVisibleItems] = useState(6);
+  const [searchTerm, setSearchTerm] = useState("")
+  const [sizeFilter, setSizeFilter] = useState("")
+  const [categoryFilter, setCategoryFilter] = useState("")
+  const [priceRange, setPriceRange] = useState([0, 30])
+  const [showFilters, setShowFilters] = useState(false)
+  const [sortBy, setSortBy] = useState("newest")
+  const [visibleItems, setVisibleItems] = useState(6)
+  const [items, setItems] = useState<any[]>([])
 
-  const filteredItems = SAMPLE_ITEMS.filter((item) => {
+  useEffect(() => {
+    const fetchListings = async () => {
+      const { data, error } = await supabase
+        .from("listing")
+        .select("*")
+        .order("id", { ascending: false })
+
+      if (error) {
+        console.error("Error fetching listings:", error.message)
+      } else {
+        setItems(data)
+      }
+    }
+
+    fetchListings()
+  }, [])
+
+  const filteredItems = items.filter((item) => {
     const matchesSearch =
+      searchTerm === "" ||
       item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       item.brand.toLowerCase().includes(searchTerm.toLowerCase());
-
+  
     const matchesSize = sizeFilter === "" || item.size === sizeFilter;
-    const matchesCategory =
-      categoryFilter === "" || item.category === categoryFilter;
-    const matchesPrice =
-      item.price >= priceRange[0] && item.price <= priceRange[1];
+ 
+    const matchesCategory = categoryFilter === "" || item.category === categoryFilter;
+  
+    const matchesPrice = Number(item.fee) >= priceRange[0] && Number(item.fee) <= priceRange[1];
 
     return matchesSearch && matchesSize && matchesCategory && matchesPrice;
-  }).sort((a, b) => {
-    if (sortBy === "price-low") return a.price - b.price;
-    if (sortBy === "price-high") return b.price - a.price;
-    // Default to newest (by id in this demo)
-    return b.id - a.id;
   });
 
   const loadMore = () => {
