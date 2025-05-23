@@ -223,7 +223,7 @@ export default function ProfilePage() {
       <div className="bg-white rounded-lg shadow p-6 mb-8">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-semibold">Your Listings</h2>
-          <Link href="/list-item">
+          <Link href="/list">
             <Button className="bg-[#8c1515] hover:bg-[#6f1111] text-white">
               List New Item
             </Button>
