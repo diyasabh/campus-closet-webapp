@@ -1,150 +1,121 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import ClothingCard from "./clothing-card"
-import Link from "next/link"
-import { PillButton } from "@/components/ui/pill-button"
-
-// Sample data for demonstration
-const SAMPLE_ITEMS = [
-  {
-    id: 15,
-    name: "Sequin Skirt",
-    brand: "Unknown",
-    size: "S",
-    category: "Going out",
-    itemType: "Skirt",
-    price: 7,
-    deposit: 10,
-    image: "/images/diya-sabharwal-sequin-skirt.jpg",
-    owner: "Diya Sabharwal",
-    condition: "Excellent",
-  },
-  {
-    id: 16,
-    name: "Red Mini Dress",
-    brand: "Windsor",
-    size: "S",
-    category: "Going Out",
-    itemType: "Dress",
-    price: 3,
-    deposit: 10,
-    image: "/images/red-mini-dress-diya.jpg",
-    owner: "Diya Sabharwal",
-    condition: "Like New (worn once)",
-  },
-  {
-    id: 17,
-    name: "Unique Indian Headpiece",
-    brand: "locally sourced",
-    size: "N/A",
-    category: "Going Out, Formalwear",
-    itemType: "Jewellry",
-    price: 5,
-    deposit: 5,
-    image: "/images/yesterday3.jpg",
-    owner: "Diya Sabharwal",
-    condition: "Like New",
-  },
-  {
-    id: 18,
-    name: "Long Blue Evening Dress",
-    brand: "(Tulum, Mexico)",
-    size: "Free",
-    category: "formal",
-    price: 10,
-    deposit: 15,
-    image: "/images/long_bluedress.jpg",
-    owner: "NaYoung S.",
-    condition: "Like New",
-  },
-  {
-    id: 19,
-    name: "Blue Midi Dress",
-    brand: "H&M",
-    size: "S",
-    category: "formal",
-    price: 5,
-    deposit: 10,
-    image: "/images/midi_bluedress.jpg",
-    owner: "NaYoung S.",
-    condition: "Excellent",
-  },
-  {
-    id: 20,
-    name: "Piglet Onesie",
-    brand: "Amazon",
-    size: "M",
-    category: "casual",
-    price: 5,
-    deposit: 10,
-    image: "/images/piglet_onsie.jpg",
-    owner: "NaYoung S.",
-    condition: "Like New",
-  },
-]
+import { SearchIcon } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { supabase } from "@/lib/supabase"
 
 export default function BrowseSection() {
-  const [searchTerm, setSearchTerm] = useState("")
-  const [sizeFilter, setSizeFilter] = useState("")
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortBy, setSortBy] = useState("newest");
+  const [visibleItems, setVisibleItems] = useState(6);
+  const [items, setItems] = useState<any[]>([]);
 
-  const filteredItems = SAMPLE_ITEMS.filter((item) => {
-    const matchesSearch =
-      item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.brand.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesSize = sizeFilter === "" || item.size === sizeFilter
+  useEffect(() => {
+    const fetchListings = async () => {
+      const { data, error } = await supabase
+        .from("listing")
+        .select("*")
+        .order("id", { ascending: false });
 
-    return matchesSearch && matchesSize
-  })
+      if (error) {
+        console.error("Error fetching listings:", error.message);
+      } else {
+        setItems(data);
+      }
+    };
+
+    fetchListings();
+  }, []);
+
+  console.log(items)
+
+  const filteredItems = items
+    .filter((item) => {
+      const matchesSearch =
+        searchTerm === "" ||
+        item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        item.brand.toLowerCase().includes(searchTerm.toLowerCase());
+      console.log(matchesSearch)
+      return matchesSearch;
+    })
+    .sort((a, b) => {
+      if (sortBy === "price-low") return a.fee - b.fee;
+      if (sortBy === "price-high") return b.fee - a.fee;
+      return b.id - a.id; // newest first
+    });
+
+
+  const loadMore = () => {
+    setVisibleItems((prev) => Math.min(prev + 6, filteredItems.length));
+  };
 
   return (
-    <section className="py-16 px-4">
-      <div className="max-w-6xl mx-auto">
-        <h2 className="font-serif text-3xl font-bold mb-8">Browse Available Items</h2>
+    <main className="max-w-6xl mx-auto py-8 px-4">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
+        <h1 className="font-serif text-3xl font-bold mb-4 md:mb-0 text-black">
+          Browse Clothing
+        </h1>
 
-        <div className="flex flex-col md:flex-row gap-4 mb-8">
-          <div className="flex-1">
-            <Input
-              placeholder="Search by name or brand..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full"
-            />
-          </div>
-
-          <div className="w-full md:w-48">
-            <Select value={sizeFilter} onValueChange={setSizeFilter}>
-              <SelectTrigger>
-                <SelectValue placeholder="Filter by size" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Sizes</SelectItem>
-                <SelectItem value="XS">XS</SelectItem>
-                <SelectItem value="S">S</SelectItem>
-                <SelectItem value="M">M</SelectItem>
-                <SelectItem value="L">L</SelectItem>
-                <SelectItem value="XL">XL</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+        <div className="flex items-center gap-2">
+          <Select value={sortBy} onValueChange={setSortBy}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Sort by" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="newest">Newest First</SelectItem>
+              <SelectItem value="price-low">Price: Low to High</SelectItem>
+              <SelectItem value="price-high">Price: High to Low</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
+      </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-          {filteredItems.map((item) => (
+      <div className="relative mb-6">
+        <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+        <Input
+          placeholder="Search by name, brand..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="pl-10"
+        />
+      </div>
+
+      <p className="text-sm text-black mb-4">
+        Showing {Math.min(visibleItems, filteredItems.length)} of {filteredItems.length} items
+      </p>
+
+      {filteredItems.length > 0 ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredItems.slice(0, visibleItems).map((item) => (
             <ClothingCard key={item.id} item={item} />
           ))}
         </div>
-
-        <div className="mt-12 text-center">
-          <Link href="/browse" className="inline-block">
-            <PillButton variant="outline" className="border-[#8c1515] text-[#8c1515] hover:bg-[#8c1515]/5">
-              View All Items
-            </PillButton>
-          </Link>
+      ) : (
+        <div className="text-center py-12">
+          <p className="text-lg text-black">
+            No items match your search criteria
+          </p>
+          <Button
+            variant="outline"
+            className="mt-4"
+            onClick={() => setSearchTerm("")}
+          >
+            Clear Search
+          </Button>
         </div>
-      </div>
-    </section>
-  )
+      )}
+
+      {visibleItems < filteredItems.length && (
+        <div className="mt-8 text-center">
+          <Button onClick={loadMore} variant="outline">
+            Load More
+          </Button>
+        </div>
+      )}
+    </main>
+  );
 }

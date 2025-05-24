@@ -103,7 +103,7 @@ export default function MyListingsPage() {
           <p className="text-gray-500 mb-6">
             List your rarely-worn clothes to make money and help other Stanford students find stylish outfits sustainably.
           </p>
-          <Link href="/list-item">
+          <Link href="/list">
             <Button className="bg-[#8c1515] hover:bg-[#6f1111] text-white">
               List Your First Item
             </Button>
