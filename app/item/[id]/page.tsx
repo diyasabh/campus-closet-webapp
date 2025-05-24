@@ -207,25 +207,28 @@ export default function ItemDetailPage({ params }: { params: Promise<{ id: strin
         <div className="space-y-4">
           <div className="aspect-[3/4] rounded-lg overflow-hidden border">
             <img
-              src={item.photo || "/placeholder.svg"}
-              alt={item.name}
-              className="w-full h-full object-cover"
-            />
+            src={item.photo[selectedImage] || "/placeholder.svg"}
+            alt={item.name}
+            className="w-full h-full object-cover"
+          />
           </div>
 
           <div className="flex gap-2 overflow-x-auto pb-2">
+            {item.photo.map((photoUrl, index) => (
               <button
-                onClick={() => setSelectedImage(0)}
+                key={index}
+                onClick={() => setSelectedImage(index)}
                 className={`flex-shrink-0 w-20 h-20 rounded-md overflow-hidden border-2 ${
-                  selectedImage === 0 ? "border-[#8c1515]" : "border-transparent"
+                  selectedImage === index ? "border-[#8c1515]" : "border-transparent"
                 }`}
               >
-          <img
-            src={item.photo || "/placeholder.svg"}
-            alt={`${item.name} view`}
-            className="w-full h-full object-cover"
-          />
-        </button>
+                <img
+                  src={photoUrl || "/placeholder.svg"}
+                  alt={`${item.name} view ${index + 1}`}
+                  className="w-full h-full object-cover"
+                />
+              </button>
+            ))}
           </div>
         </div>
 
