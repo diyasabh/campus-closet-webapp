@@ -6,7 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import Link from "next/link"; // Add this import
+import Link from "next/link";
 
 export default function ProfilePage() {
   const { user, loading, isAuthenticated, updateProfile, signOut } = useAuth();
