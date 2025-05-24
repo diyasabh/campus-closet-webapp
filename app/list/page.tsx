@@ -12,6 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Upload, User, Info } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
 import { supabase } from "@/lib/supabase"
+import { useAuth } from "@/hooks/useAuth"
 
 export default function ListItemPage() {
   const [images, setImages] = useState<string[]>([])
@@ -29,13 +30,7 @@ export default function ListItemPage() {
   
 
   // Mock user data - in a real app, this would come from authentication
-  const userData = {
-    name: "Emma Stanford",
-    email: "estanford@stanford.edu",
-    profilePicture: "/placeholder.svg?height=100&width=100&text=Profile",
-    instagram: "@stanford_emma",
-    phone: "(650) 123-4567",
-  }
+  const { user, loading: authLoading, isAuthenticated } = useAuth();
 
   // Mock image upload
   const handleImageUpload = () => {
@@ -149,7 +144,7 @@ export default function ListItemPage() {
 
                   <div className="space-y-2">
                     <Label htmlFor="size">Size</Label>
-                    <Select id="size" value={formData.size} onValueChange={(value) => setFormData({ ...formData, size: value })} required>
+                    <Select value={formData.size} onValueChange={(value) => setFormData({ ...formData, size: value })} required>
                       <SelectTrigger id="size">
                         <SelectValue placeholder="Select size" />
                       </SelectTrigger>
@@ -165,7 +160,7 @@ export default function ListItemPage() {
 
                   <div className="space-y-2">
                     <Label htmlFor="category">Category</Label>
-                    <Select id="category" value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })} required>
+                    <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })} required>
                       <SelectTrigger id="category">
                         <SelectValue placeholder="Select category" />
                       </SelectTrigger>
@@ -204,13 +199,23 @@ export default function ListItemPage() {
 
                 <div className="space-y-2">
                   <Label>Photos</Label>
-                  <Input
-                  id="photos"
-                  type="file"
-                  multiple
-                  accept="image/*"
-                  onChange={handleFileChange}
-                />
+                  <div className="flex items-center gap-2">
+                    <Input
+                      id="photos"
+                      type="file"
+                      multiple
+                      accept="image/*"
+                      onChange={handleFileChange}
+                      className="hidden"
+                    />
+                    <Button
+                      type="button"
+                      onClick={() => document.getElementById('photos')?.click()}
+                      className="bg-[#8c1515] hover:bg-[#6f1111] text-white"
+                    >
+                      Choose Files
+                    </Button>
+                  </div>
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                     {images.map((img, index) => (
                       <div key={index} className="aspect-square rounded-md overflow-hidden border">
@@ -249,13 +254,13 @@ export default function ListItemPage() {
               <div className="flex flex-col items-center">
                 <div className="w-24 h-24 rounded-full overflow-hidden border border-gray-200 mb-3">
                   <img
-                    src={userData.profilePicture || "/placeholder.svg"}
+                    src={"/placeholder.svg?height=100&width=100&text=Profile"}
                     alt="Your profile"
                     className="w-full h-full object-cover"
                   />
                 </div>
-                <h3 className="font-medium text-lg">{userData.name}</h3>
-                <p className="text-sm text-gray-500">Stanford '25</p>
+                <h3 className="font-medium text-lg">{user?.name || "Your Name"}</h3>
+                {/* Optionally display class year or other info if available */}
               </div>
 
               <Separator />
@@ -265,12 +270,12 @@ export default function ListItemPage() {
 
                 <div className="flex items-center gap-2">
                   <User className="h-4 w-4 text-gray-400" />
-                  <span className="text-sm">{userData.name}</span>
+                  <span className="text-sm">{user?.name || "Your Name"}</span>
                 </div>
 
                 <div>
                   <p className="text-xs text-gray-500 mb-1">Instagram (Optional)</p>
-                  <p className="text-sm">{userData.instagram}</p>
+                  <p className="text-sm">{user?.instagram || "Not provided"}</p>
                 </div>
               </div>
 
