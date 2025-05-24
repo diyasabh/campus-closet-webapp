@@ -303,21 +303,6 @@ export default function ListItemPage() {
                     </button>
                   </div>
                 ))}
-                
-                {photos.length < 6 && (
-                  <label className="h-32 border-2 border-dashed border-gray-300 rounded flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50">
-                    <svg className="w-8 h-8 text-gray-400 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                    </svg>
-                    <span className="text-sm text-gray-500">Add Photo</span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handlePhotoUpload}
-                      className="hidden"
-                    />
-                  </label>
-                )}
               </div>
               <p className="text-sm text-gray-500">Upload up to 6 photos. First photo will be the cover image.</p>
               {errors.photos && <p className="text-red-500 text-sm mt-1">{errors.photos}</p>}

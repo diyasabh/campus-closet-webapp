@@ -28,7 +28,7 @@ export default function ClothingCard({ item }: ClothingCardProps) {
     >
       <div className="aspect-[3/4] relative overflow-hidden">
         <img
-          src={item.image || "/placeholder.svg"}
+          src={item.photo?.[0] || item.image || "/placeholder.svg"}
           alt={item.name}
           className="w-full h-full object-cover transition-transform group-hover:scale-105 duration-300"
         />

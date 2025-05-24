@@ -85,6 +85,43 @@ export default function ListItemPage() {
     }
   }
 
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files
+    if (!files) return
+  
+    setLoading(true)
+    const uploadedImageUrls: string[] = []
+  
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i]
+      const fileExt = file.name.split('.').pop()
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`
+      const filePath = `public/${fileName}`
+  
+      // Upload to Supabase Storage
+      const { error } = await supabase.storage
+        .from("images")
+        .upload(filePath, file)
+  
+      if (error) {
+        console.error("Upload error:", error)
+        alert("Error uploading image")
+        continue
+      }
+  
+      // Get public URL
+      const { data: publicUrlData } = supabase
+        .storage
+        .from("images")
+        .getPublicUrl(filePath)
+  
+      uploadedImageUrls.push(publicUrlData.publicUrl)
+    }
+  
+    setImages((prev) => [...uploadedImageUrls, ...prev])
+    setLoading(false)
+  }
+
   return (
     <main className="max-w-4xl mx-auto py-12 px-4">
       <h1 className="font-serif text-3xl font-bold mb-8">List Your Item</h1>
@@ -168,11 +205,12 @@ export default function ListItemPage() {
                 <div className="space-y-2">
                   <Label>Photos</Label>
                   <Input
-                    type="text"
-                    value={formData.photo || ""}
-                    onChange={(e) => setFormData({ ...formData, photo: e.target.value })}
-                    placeholder="Enter photo URL"
-                  />
+                  id="photos"
+                  type="file"
+                  multiple
+                  accept="image/*"
+                  onChange={handleFileChange}
+                />
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                     {images.map((img, index) => (
                       <div key={index} className="aspect-square rounded-md overflow-hidden border">
@@ -183,22 +221,6 @@ export default function ListItemPage() {
                         />
                       </div>
                     ))}
-
-                    <button
-                      type="button"
-                      onClick={handleImageUpload}
-                      disabled={loading}
-                      className="aspect-square rounded-md border-2 border-dashed flex flex-col items-center justify-center p-4 hover:bg-gray-50 transition-colors"
-                    >
-                      {loading ? (
-                        <div className="animate-pulse">Uploading...</div>
-                      ) : (
-                        <>
-                          <Upload className="h-8 w-8 text-gray-400 mb-2" />
-                          <span className="text-sm text-gray-500">Add Photo</span>
-                        </>
-                      )}
-                    </button>
                   </div>
                   <p className="text-xs text-gray-500">Upload up to 6 photos. First photo will be the cover image.</p>
                 </div>
