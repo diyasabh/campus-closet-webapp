@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Calendar, MapPin, User, Clock, Shield } from "lucide-react";
@@ -99,6 +100,7 @@ export default function ItemDetailPage({ params }: { params: Promise<{ id: strin
   const [error, setError] = useState<string | null>(null);
   const [selectedImage, setSelectedImage] = useState(0);  // Manage image selection
   const [resolvedParams, setResolvedParams] = useState<{ id: string } | null>(null);
+  const { user, signOut, isAuthenticated } = useAuth(); // Get current user
 
   useEffect(() => {
     const resolveParams = async () => {
@@ -145,22 +147,16 @@ export default function ItemDetailPage({ params }: { params: Promise<{ id: strin
     try {
       setLoading(true);
   
-      // Get current user
-      const {
-        data: { user },
-        error: userError,
-      } = await supabase.auth.getUser();
-  
-      if (userError || !user) {
+      if (!user) {
         throw new Error("User must be logged in to rent an item.");
       }
   
       // 1. Log rental in 'rentals' table
       const { error: rentalError } = await supabase.from("rentals").insert([
         {
-          user_id: user.id,
-          item_id: item.id,
-          rented_at: new Date().toISOString(),
+          userId: user.id,
+          itemId: item.id,
+          rentedAt: new Date().toISOString()
         },
       ]);
   
