@@ -55,10 +55,6 @@ export default function ClothingCard({ item }: ClothingCardProps) {
             <p className="text-xs text-black">${item.deposit} deposit</p>
           </div>
         </div>
-
-        <p className="text-sm text-black mt-2 dot-indicator">
-          Listed by {item.owner}
-        </p>
       </CardContent>
 
       <CardFooter className="pt-0">

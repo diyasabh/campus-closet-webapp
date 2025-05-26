@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/lib/supabase";
 
 // Define the ClothingItem interface
 interface ClothingItem {
@@ -36,22 +37,28 @@ export default function MyListingsPage() {
   
   // Load user's listings
   useEffect(() => {
-    if (user) {
+    const fetchUserListings = async () => {
+      if (!user) return;
+  
       try {
-        // Get all items from localStorage
-        const itemsJson = localStorage.getItem('clothingItems');
-        const allItems = itemsJson ? JSON.parse(itemsJson) : [];
-        
-        // Filter items that belong to the current user
-        const userItems = allItems.filter((item: ClothingItem) => item.userId === user.id);
-        
-        setMyListings(userItems);
-      } catch (error) {
-        console.error('Error loading listings:', error);
+        const { data, error } = await supabase
+          .from("listing")
+          .select("*")
+          .eq("userId", user.id);
+  
+        if (error) {
+          console.error("Error fetching listings:", error.message);
+        } else {
+          setMyListings(data);
+        }
+      } catch (err) {
+        console.error("Unexpected error:", err);
       } finally {
         setIsLoading(false);
       }
-    }
+    };
+  
+    fetchUserListings();
   }, [user]);
   
   // Handler to delete an item

@@ -1,7 +1,8 @@
 "use client"
 
-import { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { supabase } from '@/lib/supabase';
 
 // Define user type
 export interface User {
@@ -10,7 +11,7 @@ export interface User {
   email: string;
   phone: string;
   instagram?: string;
-  createdAt: string;
+  createdAt?: string;
 }
 
 // Define auth context type
@@ -26,7 +27,7 @@ interface AuthContextType {
     instagram?: string;
     password: string;
   }) => Promise<{ success: boolean; error?: string }>;
-  signOut: () => void;
+  signOut: () => Promise<void>;
   updateProfile: (userData: {
     name: string;
     phone: string;
@@ -37,71 +38,83 @@ interface AuthContextType {
 // Create context
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Generate a random ID
-const generateId = () => {
-  return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-};
-
 // Define auth provider props
 interface AuthProviderProps {
   children: React.ReactNode;
 }
 
-// Create provider component
+// AuthProvider component
 export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  // Check for existing session on initial load
+  // Listen to auth state changes
   useEffect(() => {
-    const checkUserSession = () => {
-      try {
-        // Get current user data from localStorage
-        const userDataJson = localStorage.getItem('currentUser');
-        
-        if (userDataJson) {
-          const userData = JSON.parse(userDataJson);
-          setUser(userData);
-        }
-      } catch (error) {
-        console.error('Failed to fetch session:', error);
-      } finally {
-        setLoading(false);
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        const u = session.user;
+        setUser({
+          id: u.id,
+          name: u.user_metadata?.full_name || '',
+          email: u.email || '',
+          phone: u.user_metadata?.phone || '',
+          instagram: u.user_metadata?.instagram || '',
+          createdAt: undefined,
+        });
+        localStorage.setItem('currentUser', JSON.stringify(u));
+      } else {
+        setUser(null);
+        localStorage.removeItem('currentUser');
       }
-    };
+      setLoading(false);
+    });
 
-    checkUserSession();
+    // Also check current session on mount
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        const u = session.user;
+        setUser({
+          id: u.id,
+          name: u.user_metadata?.full_name || '',
+          email: u.email || '',
+          phone: u.user_metadata?.phone || '',
+          instagram: u.user_metadata?.instagram || '',
+          createdAt: undefined,
+        });
+        localStorage.setItem('currentUser', JSON.stringify(u));
+      }
+      setLoading(false);
+    });
+
+    return () => {
+      authListener?.unsubscribe();
+    };
   }, []);
 
-  // Sign in function
+  // signIn method
   const signIn = async (email: string, password: string) => {
     try {
-      // Get all users from localStorage
-      const usersJson = localStorage.getItem('users');
-      const users = usersJson ? JSON.parse(usersJson) : [];
-      
-      // Find user with matching email
-      const user = users.find((u: any) => u.email === email);
-      
-      if (!user) {
-        return { success: false, error: 'Invalid email or password' };
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error || !data.user) {
+        return { success: false, error: error?.message || 'Login failed' };
       }
-      
-      // Verify password
-      if (user.password !== password) {
-        return { success: false, error: 'Invalid email or password' };
-      }
-      
-      // Remove password before storing in state
-      const { password: _, ...userWithoutPassword } = user;
-      
-      // Set user data
-      setUser(userWithoutPassword);
-      
-      // Store current user in localStorage
-      localStorage.setItem('currentUser', JSON.stringify(userWithoutPassword));
-      
+
+      const u = data.user;
+      setUser({
+        id: u.id,
+        name: u.user_metadata?.full_name || '',
+        email: u.email || '',
+        phone: u.user_metadata?.phone || '',
+        instagram: u.user_metadata?.instagram || '',
+        createdAt: undefined,
+      });
+      localStorage.setItem('currentUser', JSON.stringify(u));
+
       return { success: true };
     } catch (error) {
       console.error('Sign in error:', error);
@@ -109,7 +122,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
-  // Sign up function
+  // signUp method
   const signUp = async (userData: {
     name: string;
     email: string;
@@ -118,43 +131,22 @@ export function AuthProvider({ children }: AuthProviderProps) {
     password: string;
   }) => {
     try {
-      // Get existing users
-      const usersJson = localStorage.getItem('users');
-      const users = usersJson ? JSON.parse(usersJson) : [];
-      
-      // Check if email is already in use
-      const existingUser = users.find((u: any) => u.email === userData.email);
-      
-      if (existingUser) {
-        return { success: false, error: 'Email already in use' };
-      }
-      
-      // Create new user
-      const newUser = {
-        id: generateId(),
-        name: userData.name,
+      const { data, error } = await supabase.auth.signUp({
         email: userData.email,
-        phone: userData.phone,
-        instagram: userData.instagram || '',
         password: userData.password,
-        createdAt: new Date().toISOString(),
-      };
-      
-      // Add user to users array
-      users.push(newUser);
-      
-      // Save updated users array
-      localStorage.setItem('users', JSON.stringify(users));
-      
-      // Remove password before storing in state
-      const { password: _, ...userWithoutPassword } = newUser;
-      
-      // Set user data
-      setUser(userWithoutPassword);
-      
-      // Store current user in localStorage
-      localStorage.setItem('currentUser', JSON.stringify(userWithoutPassword));
-      
+        options: {
+          data: {
+            full_name: userData.name,
+            phone: userData.phone,
+            instagram: userData.instagram || '',
+          },
+        },
+      });
+
+      if (error) {
+        return { success: false, error: error.message };
+      }
+
       return { success: true };
     } catch (error) {
       console.error('Sign up error:', error);
@@ -162,19 +154,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
-  // Sign out function
-  const signOut = () => {
-    // Remove current user from localStorage
-    localStorage.removeItem('currentUser');
-    
-    // Clear user state
+  // signOut method
+  const signOut = async () => {
+    await supabase.auth.signOut();
     setUser(null);
-    
-    // Redirect to home page
+    localStorage.removeItem('currentUser');
     router.push('/');
   };
 
-  // Update profile function
   const updateProfile = async (userData: {
     name: string;
     phone: string;
@@ -184,41 +171,39 @@ export function AuthProvider({ children }: AuthProviderProps) {
       if (!user) {
         return { success: false, error: 'Not authenticated' };
       }
-      
-      // Get all users
-      const usersJson = localStorage.getItem('users');
-      const users = usersJson ? JSON.parse(usersJson) : [];
-      
-      // Find and update user
-      const updatedUsers = users.map((u: any) => {
-        if (u.id === user.id) {
-          return {
-            ...u,
-            name: userData.name,
-            phone: userData.phone,
-            instagram: userData.instagram || '',
-          };
-        }
-        return u;
-      });
-      
-      // Save updated users array
-      localStorage.setItem('users', JSON.stringify(updatedUsers));
-      
-      // Update current user
-      const updatedUser = {
-        ...user,
-        name: userData.name,
+
+      const updates = {
+        id: user.id,
+        full_name: userData.name,
         phone: userData.phone,
         instagram: userData.instagram || '',
+        updated_at: new Date(),
       };
-      
-      // Update user state
-      setUser(updatedUser);
-      
-      // Update current user in localStorage
-      localStorage.setItem('currentUser', JSON.stringify(updatedUser));
-      
+
+      const { error } = await supabase.auth.updateUser({
+        data: {
+          full_name: updates.full_name,
+          phone: updates.phone,
+          instagram: updates.instagram,
+        },
+      });
+
+      if (error) {
+        return { success: false, error: error.message };
+      }
+
+      // Update local user state
+      setUser((prev) =>
+        prev
+          ? {
+              ...prev,
+              name: userData.name,
+              phone: userData.phone,
+              instagram: userData.instagram || '',
+            }
+          : null
+      );
+
       return { success: true };
     } catch (error) {
       console.error('Profile update error:', error);
@@ -243,13 +228,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
   );
 }
 
-// Create hook to use auth context
+// Hook to consume the auth context
 export function useAuth() {
   const context = useContext(AuthContext);
-  
   if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
-  
   return context;
 }
