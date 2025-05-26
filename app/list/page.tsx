@@ -64,6 +64,7 @@ export default function ListItemPage() {
   
     const userId = user.id
     const userEmail = user.email
+    const userName = user.user_metadata?.full_name
   
     const { error } = await supabase.from("listing").insert([
       {
@@ -76,7 +77,8 @@ export default function ListItemPage() {
         description: formData.description,
         photo: images,
         userId: userId,
-        userEmail: userEmail
+        userEmail: userEmail,
+        userName: userName
       },
     ])
   
