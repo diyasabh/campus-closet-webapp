@@ -45,6 +45,20 @@ export default function ListItemPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
+
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser()
+  
+    if (userError || !user) {
+      setLoading(false)
+      alert("You must be signed in to list an item.")
+      return
+    }
+  
+    const userId = user.id
+    const userEmail = user.email
   
     const { error } = await supabase.from("listing").insert([
       {
@@ -55,7 +69,9 @@ export default function ListItemPage() {
         fee: Number(formData.fee),
         deposit: Number(formData.deposit),
         description: formData.description,
-        photo: images
+        photo: images,
+        userId: userId,
+        userEmail: userEmail
       },
     ])
   
