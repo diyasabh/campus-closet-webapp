@@ -1,7 +1,7 @@
-// app/list-item/page.tsx
+// app/edit-item/[id]/page.tsx
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +13,7 @@ import { supabase } from "@/lib/supabase";
 import { useSupabaseAnalytics } from "@/hooks/useSupabaseAnalytics";
 
 interface ClothingItem {
+  id: number;
   name: string;
   brand: string;
   size: string;
@@ -22,13 +23,17 @@ interface ClothingItem {
   description: string;
   photo: string;
   owner: string;
+  user_id: string;
 }
 
-export default function ListItemPage() {
+export default function EditItemPage({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
   const { trackUserEngagement } = useSupabaseAnalytics();
   const [loading, setLoading] = useState(false);
+  const [fetchingItem, setFetchingItem] = useState(true);
+  const [itemId, setItemId] = useState<string>("");
   const [formData, setFormData] = useState<ClothingItem>({
+    id: 0,
     name: "",
     brand: "",
     size: "",
@@ -38,7 +43,79 @@ export default function ListItemPage() {
     description: "",
     photo: "",
     owner: "",
+    user_id: "",
   });
+
+  // Resolve params and fetch item data
+  useEffect(() => {
+    const loadItem = async () => {
+      try {
+        const resolvedParams = await params;
+        const id = resolvedParams.id;
+        setItemId(id);
+
+        // Get current user
+        const { data: { user }, error: userError } = await supabase.auth.getUser();
+        
+        if (userError || !user) {
+          alert("You must be logged in to edit items");
+          router.push('/');
+          return;
+        }
+
+        // Fetch the item from Supabase
+        const { data: item, error } = await supabase
+          .from('listing')
+          .select('*')
+          .eq('id', id)
+          .single();
+
+        if (error) {
+          console.error('Error fetching item:', error);
+          alert('Item not found');
+          router.push('/profile/listings');
+          return;
+        }
+
+        // Check if user owns this item
+        if (item.user_id !== user.id) {
+          alert("You can only edit your own items");
+          router.push('/profile/listings');
+          return;
+        }
+
+        // Populate form with existing data
+        setFormData({
+          id: item.id,
+          name: item.name || "",
+          brand: item.brand || "",
+          size: item.size || "",
+          category: item.category || "",
+          fee: item.fee || 0,
+          deposit: item.deposit || 0,
+          description: item.description || "",
+          photo: item.photo || "",
+          owner: item.owner || "",
+          user_id: item.user_id || "",
+        });
+
+        // Track edit page view
+        trackUserEngagement('edit_item_page_view', {
+          item_id: item.id,
+          item_name: item.name
+        });
+
+      } catch (error: any) {
+        console.error('Error loading item:', error);
+        alert('Error loading item');
+        router.push('/profile/listings');
+      } finally {
+        setFetchingItem(false);
+      }
+    };
+
+    loadItem();
+  }, [params, router, trackUserEngagement]);
 
   const handleInputChange = (field: keyof ClothingItem, value: string | number) => {
     setFormData(prev => ({
@@ -53,63 +130,50 @@ export default function ListItemPage() {
     try {
       setLoading(true);
 
-      // Get current user
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
-      
-      if (userError || !user) {
-        alert("You must be logged in to list an item");
-        return;
-      }
-
-      // Track listing creation attempt
-      trackUserEngagement('listing_creation_attempt', {
-        category: formData.category,
-        fee: formData.fee
+      // Track edit attempt
+      trackUserEngagement('item_edit_attempt', {
+        item_id: formData.id,
+        item_name: formData.name
       });
 
-      // Insert the new listing into Supabase
-      const { data, error } = await supabase
+      // Update the item in Supabase
+      const { error } = await supabase
         .from('listing')
-        .insert([
-          {
-            name: formData.name,
-            brand: formData.brand,
-            size: formData.size,
-            category: formData.category,
-            fee: formData.fee,
-            deposit: formData.deposit,
-            description: formData.description,
-            photo: formData.photo || '/placeholder.svg', // Default placeholder if no photo
-            owner: formData.owner || user.email || 'Anonymous',
-            user_id: user.id, // Link to the user who created it
-            created_at: new Date().toISOString()
-          }
-        ])
-        .select()
-        .single();
+        .update({
+          name: formData.name,
+          brand: formData.brand,
+          size: formData.size,
+          category: formData.category,
+          fee: formData.fee,
+          deposit: formData.deposit,
+          description: formData.description,
+          photo: formData.photo || '/placeholder.svg',
+          owner: formData.owner,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', formData.id);
 
       if (error) {
-        console.error('Error creating listing:', error);
-        alert(`Error creating listing: ${error.message}`);
+        console.error('Error updating item:', error);
+        alert(`Error updating item: ${error.message}`);
         
-        // Track listing creation failure
-        trackUserEngagement('listing_creation_failed', {
-          error: error.message,
-          category: formData.category
+        // Track edit failure
+        trackUserEngagement('item_edit_failed', {
+          item_id: formData.id,
+          error: error.message
         });
         return;
       }
 
-      // Track successful listing creation
-      trackUserEngagement('listing_creation_success', {
-        listing_id: data.id,
-        category: formData.category,
-        fee: formData.fee
+      // Track successful edit
+      trackUserEngagement('item_edit_success', {
+        item_id: formData.id,
+        item_name: formData.name
       });
 
-      alert("Item listed successfully!");
+      alert("Item updated successfully!");
       
-      // Redirect to the listings page or profile
+      // Redirect back to listings
       router.push('/profile/listings');
       
     } catch (error: any) {
@@ -117,7 +181,8 @@ export default function ListItemPage() {
       alert(`Unexpected error: ${error.message}`);
       
       // Track unexpected errors
-      trackUserEngagement('listing_creation_error', {
+      trackUserEngagement('item_edit_error', {
+        item_id: formData.id,
         error: error.message
       });
     } finally {
@@ -125,11 +190,66 @@ export default function ListItemPage() {
     }
   };
 
+  const handleDelete = async () => {
+    if (!confirm("Are you sure you want to delete this item? This action cannot be undone.")) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      // Track delete attempt
+      trackUserEngagement('item_delete_attempt', {
+        item_id: formData.id,
+        item_name: formData.name
+      });
+
+      // Delete the item from Supabase
+      const { error } = await supabase
+        .from('listing')
+        .delete()
+        .eq('id', formData.id);
+
+      if (error) {
+        console.error('Error deleting item:', error);
+        alert(`Error deleting item: ${error.message}`);
+        return;
+      }
+
+      // Track successful deletion
+      trackUserEngagement('item_delete_success', {
+        item_id: formData.id,
+        item_name: formData.name
+      });
+
+      alert("Item deleted successfully!");
+      
+      // Redirect back to listings
+      router.push('/profile/listings');
+      
+    } catch (error: any) {
+      console.error('Unexpected error:', error);
+      alert(`Unexpected error: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (fetchingItem) {
+    return (
+      <main className="max-w-2xl mx-auto py-12 px-4">
+        <div className="text-center">
+          <p>Loading item...</p>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="max-w-2xl mx-auto py-12 px-4">
       <Card>
         <CardHeader>
-          <CardTitle className="text-2xl font-bold text-center">List Your Item</CardTitle>
+          <CardTitle className="text-2xl font-bold text-center">Edit Your Item</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -161,7 +281,7 @@ export default function ListItemPage() {
             {/* Size */}
             <div>
               <Label htmlFor="size">Size *</Label>
-              <Select onValueChange={(value) => handleInputChange('size', value)} required>
+              <Select value={formData.size} onValueChange={(value) => handleInputChange('size', value)} required>
                 <SelectTrigger>
                   <SelectValue placeholder="Select size" />
                 </SelectTrigger>
@@ -180,7 +300,7 @@ export default function ListItemPage() {
             {/* Category */}
             <div>
               <Label htmlFor="category">Category *</Label>
-              <Select onValueChange={(value) => handleInputChange('category', value)} required>
+              <Select value={formData.category} onValueChange={(value) => handleInputChange('category', value)} required>
                 <SelectTrigger>
                   <SelectValue placeholder="Select category" />
                 </SelectTrigger>
@@ -252,6 +372,18 @@ export default function ListItemPage() {
               <p className="text-sm text-gray-500 mt-1">
                 Upload your photo to a service like Imgur or Google Drive and paste the link here
               </p>
+              {formData.photo && (
+                <div className="mt-2">
+                  <img 
+                    src={formData.photo} 
+                    alt="Preview" 
+                    className="w-32 h-32 object-cover rounded-md border"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = '/placeholder.svg';
+                    }}
+                  />
+                </div>
+              )}
             </div>
 
             {/* Owner Name */}
@@ -267,14 +399,34 @@ export default function ListItemPage() {
               />
             </div>
 
-            {/* Submit Button */}
-            <Button 
-              type="submit" 
-              className="w-full bg-[#8c1515] hover:bg-[#6f1111] text-white"
-              disabled={loading}
-            >
-              {loading ? "Creating Listing..." : "List Item"}
-            </Button>
+            {/* Action Buttons */}
+            <div className="flex gap-4">
+              <Button 
+                type="submit" 
+                className="flex-1 bg-[#8c1515] hover:bg-[#6f1111] text-white"
+                disabled={loading}
+              >
+                {loading ? "Updating..." : "Update Item"}
+              </Button>
+              
+              <Button 
+                type="button"
+                variant="outline"
+                onClick={() => router.push('/profile/listings')}
+                disabled={loading}
+              >
+                Cancel
+              </Button>
+              
+              <Button 
+                type="button"
+                variant="destructive"
+                onClick={handleDelete}
+                disabled={loading}
+              >
+                {loading ? "Deleting..." : "Delete"}
+              </Button>
+            </div>
           </form>
         </CardContent>
       </Card>

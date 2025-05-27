@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, use } from "react";
+import { useState, use, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Calendar, MapPin, User, Clock, Shield } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useSupabaseAnalytics } from '@/hooks/useSupabaseAnalytics';
 
 interface ItemOwner {
   name: string;
@@ -98,10 +99,132 @@ const ITEMS: Items = {
 
 export default function ItemDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const [selectedImage, setSelectedImage] = useState(0);
+  const [activeTab, setActiveTab] = useState("details");
+  const [rentingInProgress, setRentingInProgress] = useState(false);
+  const { trackItemAnalytics, trackUserEngagement, trackConversionStep } = useSupabaseAnalytics();
   const resolvedParams = use(params);
   const item = ITEMS[parseInt(resolvedParams.id)];
 
+  // Track item view when component loads
+  useEffect(() => {
+    if (item) {
+      // Track item view in Supabase
+      trackItemAnalytics(item.id, 'view', {
+        item_name: item.name,
+        item_category: item.category,
+        item_price: item.price
+      });
+      
+      // Track conversion funnel step
+      trackConversionStep(item.id, 'item_view', {
+        item_name: item.name,
+        price: item.price
+      });
+      
+      // Track page engagement time start
+      const startTime = Date.now();
+      
+      return () => {
+        // Track how long user spent on this item page
+        const timeSpent = Math.round((Date.now() - startTime) / 1000);
+        trackUserEngagement('time_on_item_page', {
+          item_id: item.id,
+          time_spent_seconds: timeSpent,
+          item_name: item.name
+        });
+      };
+    }
+  }, [item, trackItemAnalytics, trackConversionStep, trackUserEngagement]);
+
+  // Handle image selection with tracking
+  const handleImageClick = (imageIndex: number) => {
+    trackItemAnalytics(item?.id || 0, 'image_click', {
+      image_index: imageIndex,
+      total_images: item?.images.length
+    });
+    setSelectedImage(imageIndex);
+  };
+
+  // Handle tab changes with tracking
+  const handleTabChange = (tabValue: string) => {
+    trackUserEngagement(`tab_${tabValue}_view`, {
+      item_id: item?.id,
+      tab_name: tabValue
+    });
+    setActiveTab(tabValue);
+  };
+
+  // Handle rent button click with comprehensive tracking
+  const handleRentNow = async () => {
+    if (!item) return;
+
+    try {
+      setRentingInProgress(true);
+
+      // Track rent request initiation
+      trackItemAnalytics(item.id, 'rent_request', {
+        item_name: item.name,
+        rental_price: item.price,
+        deposit_amount: item.deposit
+      });
+
+      trackConversionStep(item.id, 'rent_click', {
+        item_name: item.name,
+        price: item.price
+      });
+
+      // Simulate rental process (replace with your actual rental logic)
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Track successful rental completion
+      trackItemAnalytics(item.id, 'rent_completed', {
+        item_name: item.name,
+        rental_price: item.price,
+        deposit_amount: item.deposit,
+        owner_name: item.owner.name
+      });
+
+      trackConversionStep(item.id, 'rent_completed', {
+        item_name: item.name,
+        price: item.price,
+        success: true
+      });
+
+      alert(`Successfully rented ${item.name}!`);
+    } catch (error) {
+      // Track rental failure
+      trackItemAnalytics(item.id, 'rent_failed', {
+        error_type: 'rental_process_error',
+        item_name: item.name
+      });
+
+      trackConversionStep(item.id, 'rent_failed', {
+        item_name: item.name,
+        error: 'rental_process_error'
+      });
+
+      alert('Failed to rent item. Please try again.');
+    } finally {
+      setRentingInProgress(false);
+    }
+  };
+
+  // Handle owner contact tracking
+  const handleOwnerInteraction = (interactionType: string) => {
+    trackUserEngagement(`owner_${interactionType}`, {
+      item_id: item?.id,
+      owner_name: item?.owner.name,
+      owner_rating: item?.owner.rating
+    });
+  };
+
   if (!item) {
+    // Track 404 events
+    trackUserEngagement('item_not_found', {
+      requested_item_id: parseInt(resolvedParams.id),
+      page_path: window.location.pathname
+    });
+    
     return (
       <main className="max-w-6xl mx-auto py-12 px-4">
         <div className="text-center">
@@ -129,7 +252,7 @@ export default function ItemDetailPage({ params }: { params: Promise<{ id: strin
             {item.images.map((img: string, index: number) => (
               <button
                 key={index}
-                onClick={() => setSelectedImage(index)}
+                onClick={() => handleImageClick(index)}
                 className={`flex-shrink-0 w-20 h-20 rounded-md overflow-hidden border-2 ${
                   selectedImage === index
                     ? "border-[#8c1515]"
@@ -156,7 +279,10 @@ export default function ItemDetailPage({ params }: { params: Promise<{ id: strin
           </div>
 
           <div className="flex items-center gap-4 text-sm text-gray-600">
-            <div className="flex items-center">
+            <div 
+              className="flex items-center cursor-pointer hover:text-[#8c1515]"
+              onClick={() => handleOwnerInteraction('profile_click')}
+            >
               <User className="h-4 w-4 mr-2" />
               <span>Listed by {item.owner.name}</span>
             </div>
@@ -172,13 +298,17 @@ export default function ItemDetailPage({ params }: { params: Promise<{ id: strin
                 <p className="text-2xl font-bold text-black">${item.price}/day</p>
                 <p className="text-sm text-gray-600">${item.deposit} deposit</p>
               </div>
-              <Button className="bg-[#8c1515] hover:bg-[#6f1111] text-white">
-                Rent Now
+              <Button 
+                className="bg-[#8c1515] hover:bg-[#6f1111] text-white"
+                onClick={handleRentNow}
+                disabled={rentingInProgress}
+              >
+                {rentingInProgress ? "Processing..." : "Rent Now"}
               </Button>
             </div>
           </div>
 
-          <Tabs defaultValue="details">
+          <Tabs value={activeTab} onValueChange={handleTabChange}>
             <TabsList>
               <TabsTrigger value="details">Details</TabsTrigger>
               <TabsTrigger value="rental">Rental Info</TabsTrigger>
@@ -196,14 +326,28 @@ export default function ItemDetailPage({ params }: { params: Promise<{ id: strin
               </div>
               <div>
                 <p className="text-sm text-gray-600 mb-2">Description</p>
-                <p className="text-gray-800">{item.description}</p>
+                <p 
+                  className="text-gray-800"
+                  onClick={() => trackUserEngagement('description_read', {
+                    item_id: item.id,
+                    item_name: item.name
+                  })}
+                >
+                  {item.description}
+                </p>
               </div>
             </TabsContent>
             <TabsContent value="rental" className="space-y-4">
               <Card>
                 <CardContent className="pt-6">
                   <div className="space-y-4">
-                    <div className="flex items-start gap-4">
+                    <div 
+                      className="flex items-start gap-4 cursor-pointer hover:bg-gray-50 p-2 rounded"
+                      onClick={() => trackUserEngagement('security_deposit_info_click', {
+                        item_id: item.id,
+                        deposit_amount: item.deposit
+                      })}
+                    >
                       <Shield className="h-5 w-5 text-[#8c1515] mt-1" />
                       <div>
                         <h3 className="font-medium mb-1">Security Deposit</h3>
@@ -213,7 +357,12 @@ export default function ItemDetailPage({ params }: { params: Promise<{ id: strin
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-start gap-4">
+                    <div 
+                      className="flex items-start gap-4 cursor-pointer hover:bg-gray-50 p-2 rounded"
+                      onClick={() => trackUserEngagement('rental_period_info_click', {
+                        item_id: item.id
+                      })}
+                    >
                       <Calendar className="h-5 w-5 text-[#8c1515] mt-1" />
                       <div>
                         <h3 className="font-medium mb-1">Rental Period</h3>
@@ -223,7 +372,12 @@ export default function ItemDetailPage({ params }: { params: Promise<{ id: strin
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-start gap-4">
+                    <div 
+                      className="flex items-start gap-4 cursor-pointer hover:bg-gray-50 p-2 rounded"
+                      onClick={() => trackUserEngagement('pickup_location_info_click', {
+                        item_id: item.id
+                      })}
+                    >
                       <MapPin className="h-5 w-5 text-[#8c1515] mt-1" />
                       <div>
                         <h3 className="font-medium mb-1">Pickup Location</h3>
