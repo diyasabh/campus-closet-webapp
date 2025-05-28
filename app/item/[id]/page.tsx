@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Calendar, MapPin, User, Clock, Shield } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/lib/supabase";
+import emailjs from 'emailjs-com';
 
 interface ItemOwner {
   name: string;
@@ -156,7 +157,11 @@ export default function ItemDetailPage({ params }: { params: Promise<{ id: strin
         {
           userId: user.id,
           itemId: item.id,
-          rentedAt: new Date().toISOString()
+          rentedAt: new Date().toISOString(),
+          renterEmail: user.email,
+          renterName: user.name,
+          ownerEmail: item.userEmail,
+          ownerName: item.userName
         },
       ]);
   
@@ -173,6 +178,19 @@ export default function ItemDetailPage({ params }: { params: Promise<{ id: strin
       if (deleteError) {
         throw new Error(`Failed to delete item: ${deleteError.message}`);
       }
+
+      const toEmails = `${item.userEmail}, ${user.email}`
+
+      emailjs.send('service_nla0ot8', 'template_x867sks', {
+        owner_name: item.userName,
+        renter_name: user.name,
+        item_name: item.name,
+        owner_email: item.userEmail,
+        renter_email: user.email,
+        rental_fee: item.fee,
+        security_deposit: item.deposit,
+        email: toEmails,  
+      }, 'qa1eAXMv6yKYqBlBf');
   
       alert("Item rented successfully!");
       // Optional: redirect or refresh

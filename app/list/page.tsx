@@ -270,15 +270,7 @@ export default function ListItemPage() {
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="flex flex-col items-center">
-                <div className="w-24 h-24 rounded-full overflow-hidden border border-gray-200 mb-3">
-                  <img
-                    src={"/placeholder.svg?height=100&width=100&text=Profile"}
-                    alt="Your profile"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
                 <h3 className="font-medium text-lg">{user?.name || "Your Name"}</h3>
-                {/* Optionally display class year or other info if available */}
               </div>
 
               <Separator />
@@ -303,8 +295,7 @@ export default function ListItemPage() {
                   Privacy Note
                 </h4>
                 <p className="text-xs text-gray-500">
-                  Your email and phone number are never shared publicly. Other users can contact you through the Campus
-                  Closet messaging system.
+                  Your email and phone number are never shared publicly.
                 </p>
               </div>
             </CardContent>
