@@ -30,13 +30,7 @@ export default function ListItemPage() {
   
 
   // Mock user data - in a real app, this would come from authentication
-  const userData = {
-    name: "Emma Stanford",
-    email: "estanford@stanford.edu",
-    profilePicture: "/placeholder.svg?height=100&width=100&text=Profile",
-    instagram: "@stanford_emma",
-    phone: "(650) 123-4567",
-  }
+  const { user, loading: authLoading, isAuthenticated } = useAuth();
 
   // Mock image upload
   const handleImageUpload = () => {
@@ -104,8 +98,6 @@ export default function ListItemPage() {
     }
   }
 
-  const { user } = useAuth();
-
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
     if (!files) return
@@ -170,7 +162,7 @@ export default function ListItemPage() {
 
                   <div className="space-y-2">
                     <Label htmlFor="size">Size</Label>
-                    <Select id="size" value={formData.size} onValueChange={(value) => setFormData({ ...formData, size: value })} required>
+                    <Select value={formData.size} onValueChange={(value) => setFormData({ ...formData, size: value })} required>
                       <SelectTrigger id="size">
                         <SelectValue placeholder="Select size" />
                       </SelectTrigger>
@@ -186,7 +178,7 @@ export default function ListItemPage() {
 
                   <div className="space-y-2">
                     <Label htmlFor="category">Category</Label>
-                    <Select id="category" value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })} required>
+                    <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })} required>
                       <SelectTrigger id="category">
                         <SelectValue placeholder="Select category" />
                       </SelectTrigger>
@@ -225,13 +217,23 @@ export default function ListItemPage() {
 
                 <div className="space-y-2">
                   <Label>Photos</Label>
-                  <Input
-                  id="photos"
-                  type="file"
-                  multiple
-                  accept="image/*"
-                  onChange={handleFileChange}
-                />
+                  <div className="flex items-center gap-2">
+                    <Input
+                      id="photos"
+                      type="file"
+                      multiple
+                      accept="image/*"
+                      onChange={handleFileChange}
+                      className="hidden"
+                    />
+                    <Button
+                      type="button"
+                      onClick={() => document.getElementById('photos')?.click()}
+                      className="bg-[#8c1515] hover:bg-[#6f1111] text-white"
+                    >
+                      Choose Files
+                    </Button>
+                  </div>
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                     {images.map((img, index) => (
                       <div key={index} className="aspect-square rounded-md overflow-hidden border">
