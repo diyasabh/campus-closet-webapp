@@ -12,6 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Upload, User, Info } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
 import { supabase } from "@/lib/supabase"
+import { useAuth } from "@/hooks/useAuth"
 
 export default function ListItemPage() {
   const [images, setImages] = useState<string[]>([])
@@ -102,6 +103,8 @@ export default function ListItemPage() {
       setImages([])
     }
   }
+
+  const { user } = useAuth();
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
@@ -265,15 +268,7 @@ export default function ListItemPage() {
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="flex flex-col items-center">
-                <div className="w-24 h-24 rounded-full overflow-hidden border border-gray-200 mb-3">
-                  <img
-                    src={userData.profilePicture || "/placeholder.svg"}
-                    alt="Your profile"
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <h3 className="font-medium text-lg">{userData.name}</h3>
-                <p className="text-sm text-gray-500">Stanford '25</p>
+                <h3 className="font-medium text-lg">{user?.name || "Your Name"}</h3>
               </div>
 
               <Separator />
@@ -283,12 +278,12 @@ export default function ListItemPage() {
 
                 <div className="flex items-center gap-2">
                   <User className="h-4 w-4 text-gray-400" />
-                  <span className="text-sm">{userData.name}</span>
+                  <span className="text-sm">{user?.name || "Your Name"}</span>
                 </div>
 
                 <div>
                   <p className="text-xs text-gray-500 mb-1">Instagram (Optional)</p>
-                  <p className="text-sm">{userData.instagram}</p>
+                  <p className="text-sm">{user?.instagram || "Not provided"}</p>
                 </div>
               </div>
 
@@ -298,8 +293,7 @@ export default function ListItemPage() {
                   Privacy Note
                 </h4>
                 <p className="text-xs text-gray-500">
-                  Your email and phone number are never shared publicly. Other users can contact you through the Campus
-                  Closet messaging system.
+                  Your email and phone number are never shared publicly.
                 </p>
               </div>
             </CardContent>
