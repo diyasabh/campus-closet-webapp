@@ -192,7 +192,7 @@ export default function ItemDetailPage({ params }: { params: Promise<{ id: strin
         email: toEmails,  
       }, 'qa1eAXMv6yKYqBlBf');
   
-      alert("Item rented successfully!");
+      alert("You'll receive an email with the owner's contact information shortly. Please check your inbox!");
       // Optional: redirect or refresh
       // router.push("/"); or location.reload();
     } catch (err: any) {
