@@ -167,6 +167,7 @@ export default function ListItemPage() {
                         <SelectValue placeholder="Select size" />
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectItem value="Free">Free</SelectItem>
                         <SelectItem value="XS">XS</SelectItem>
                         <SelectItem value="S">S</SelectItem>
                         <SelectItem value="M">M</SelectItem>
@@ -188,18 +189,19 @@ export default function ListItemPage() {
                         <SelectItem value="outerwear">Outerwear</SelectItem>
                         <SelectItem value="athletic">Athletic</SelectItem>
                         <SelectItem value="accessories">Accessories</SelectItem>
+                        <SelectItem value="other">Other</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="rental-fee">Rental Fee ($ per day)</Label>
-                    <Input id="rental-fee" value={formData.fee} onChange={(e) => setFormData({ ...formData, fee: e.target.value })} type="number" min="1" step="1" required />
+                    <Input id="rental-fee" value={formData.fee} onChange={(e) => setFormData({ ...formData, fee: e.target.value })} type="number" min="0" step="1" required />
                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="deposit">Security Deposit ($)</Label>
-                    <Input id="deposit" value={formData.deposit} onChange={(e) => setFormData({ ...formData, deposit: e.target.value })} type="number" min="10" step="5" required />
+                    <Input id="deposit" value={formData.deposit} onChange={(e) => setFormData({ ...formData, deposit: e.target.value })} type="number" min="0" step="1" required />
                   </div>
                 </div>
 

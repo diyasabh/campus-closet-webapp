@@ -19,12 +19,7 @@ export function Modal({ isOpen, onClose, title, description, children }: ModalPr
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <div className="flex items-center justify-between">
-            <DialogTitle>{title}</DialogTitle>
-            <Button variant="ghost" size="icon" onClick={onClose} className="h-6 w-6 rounded-full">
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
+          <DialogTitle>{title}</DialogTitle>
           {description && <DialogDescription>{description}</DialogDescription>}
         </DialogHeader>
         {children}
