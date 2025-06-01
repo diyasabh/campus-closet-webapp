@@ -95,6 +95,22 @@ const ITEMS: Items = {
   },
 }
 
+export async function trackButtonClick(
+  userId: string,
+  page: string,
+  element: string,
+  metadata: {}
+) {
+  await supabase.from('events').insert({
+    user_id: userId,
+    event_type: 'button_click',
+    page,
+    element,
+    timestamp: new Date().toISOString(),
+    metadata: metadata
+  });
+}
+
 export default function ItemDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const [item, setItem] = useState(null);  // Store the item data
   const [loading, setLoading] = useState(true);  // To handle loading state
@@ -150,6 +166,10 @@ export default function ItemDetailPage({ params }: { params: Promise<{ id: strin
   
       if (!user) {
         throw new Error("User must be logged in to rent an item.");
+      }
+
+      if (user) {
+        await trackButtonClick(user.id, window.location.pathname, 'rent_this_item_button');
       }
   
       // 1. Log rental in 'rentals' table

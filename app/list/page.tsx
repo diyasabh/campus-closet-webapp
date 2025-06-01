@@ -13,6 +13,7 @@ import { Upload, User, Info } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
 import { supabase } from "@/lib/supabase"
 import { useAuth } from "@/hooks/useAuth"
+import { trackButtonClick } from "../item/[id]/page"
 
 export default function ListItemPage() {
   const [images, setImages] = useState<string[]>([])
@@ -55,6 +56,10 @@ export default function ListItemPage() {
       setLoading(false)
       alert("You must be signed in to list an item.")
       return
+    }
+
+    if (user) {
+      await trackButtonClick(user.id, window.location.pathname, 'list_item_button');
     }
   
     const userId = user.id

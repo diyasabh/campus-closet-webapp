@@ -97,7 +97,7 @@ export default function MyListingsPage() {
     <div className="container mx-auto py-10 px-4 max-w-4xl">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-3xl font-bold">Your Listings</h1>
-        <Link href="/list-item">
+        <Link href="/list">
           <Button className="bg-[#8c1515] hover:bg-[#6f1111] text-white">
             Add New Item
           </Button>
