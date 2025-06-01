@@ -2,6 +2,8 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { HeroButton } from "@/components/ui/hero-button";
+import { useAuth } from "@/hooks/useAuth";
+import { trackButtonClick } from "@/app/item/[id]/page";
 
 interface ClothingItem {
   id: number;
@@ -19,7 +21,19 @@ interface ClothingCardProps {
   item: ClothingItem;
 }
 
+
+
 export default function ClothingCard({ item }: ClothingCardProps) {
+  const { user } = useAuth();
+
+  const handleViewDetailsClick = async () => {
+    if (!user) return;
+    await trackButtonClick(user.id, window.location.pathname, 'view_details_button', {
+      itemId: item.id,
+      itemName: item.name,
+    });
+  };
+
   return (
     <Card
       className={`overflow-hidden transition-all group border-black relative ${
@@ -59,7 +73,7 @@ export default function ClothingCard({ item }: ClothingCardProps) {
 
       <CardFooter className="pt-0">
         <Link href={`/item/${item.id}`} className="w-full">
-          <HeroButton className="w-full" variant="default" size="sm">
+          <HeroButton className="w-full" variant="default" size="sm" onClick={handleViewDetailsClick}>
             View Details
           </HeroButton>
         </Link>

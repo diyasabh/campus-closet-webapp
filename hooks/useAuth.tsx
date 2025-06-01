@@ -51,6 +51,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Listen to auth state changes
   useEffect(() => {
+    const handleBeforeUnload = () => {
+      logSessionEnd();
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
         const u = session.user;
@@ -83,14 +88,43 @@ export function AuthProvider({ children }: AuthProviderProps) {
           createdAt: undefined,
         });
         localStorage.setItem('currentUser', JSON.stringify(u));
+        logSessionStart(u.id)
+      } else {
+        setUser(null);
+        localStorage.removeItem('currentUser');
       }
       setLoading(false);
     });
 
     return () => {
       authListener?.unsubscribe();
+      window.removeEventListener('beforeunload', handleBeforeUnload);
     };
   }, []);
+
+  const logSessionStart = async (userId: string) => {
+    const { data, error } = await supabase
+      .from('sessions')
+      .insert([{ user_id: userId }])
+      .select('id')
+      .single();
+  
+    if (!error && data) {
+      localStorage.setItem('active_session_id', data.id);
+    }
+  };
+  
+  const logSessionEnd = async () => {
+    const sessionId = localStorage.getItem('active_session_id');
+    if (!sessionId) return;
+  
+    await supabase
+      .from('sessions')
+      .update({ session_end: new Date().toISOString() })
+      .eq('id', sessionId);
+  
+    localStorage.removeItem('active_session_id');
+  };
 
   // signIn method
   const signIn = async (email: string, password: string) => {
@@ -156,6 +190,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // signOut method
   const signOut = async () => {
+    await logSessionEnd();
     await supabase.auth.signOut();
     setUser(null);
     localStorage.removeItem('currentUser');
