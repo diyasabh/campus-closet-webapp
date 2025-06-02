@@ -83,7 +83,7 @@ export default function Home() {
                <div className="w-10 h-10 bg-gray-200 rounded-full mr-3"></div>
                <div>
                  <p className="font-medium">Michael W.</p>
-                 <p className="text-sm text-gray-500">Class of 2024</p>
+                 <p className="text-sm text-gray-500">Class of 2025</p>
                </div>
              </div>
            </div>
