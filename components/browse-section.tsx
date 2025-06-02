@@ -48,7 +48,6 @@ export default function BrowseSection() {
       return b.id - a.id; // newest first
     });
 
-
   const loadMore = () => {
     setVisibleItems((prev) => Math.min(prev + 6, filteredItems.length));
   };

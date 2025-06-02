@@ -6,8 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Calendar, MapPin, User, Clock, Shield } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/lib/supabase";
-import emailjs from 'emailjs-com';
+import emailjs from '@emailjs/browser';
 
 interface ItemOwner {
   name: string;
@@ -21,85 +22,34 @@ interface Item {
   brand: string;
   size: string;
   category: string;
-  price: number;
+  fee: number;
   deposit: number;
   description: string;
-  images: string[];
-  owner: ItemOwner;
+  photo: string[];
+  owner: string;
+  userName: string;
+  userEmail: string;
 }
 
-// This would come from a database in a real app
-const ITEMS: Items = {
-  18: {
-    id: 18,
-    name: "Long Blue Evening Dress",
-    brand: "(Tulum, Mexico)",
-    size: "Free",
-    category: "formal",
-    price: 10,
-    deposit: 15,
-    description: "Beautiful long blue evening dress from Tulum, Mexico. Perfect for formal events, parties, or special occasions. The dress features a flowing design with elegant details. Worn only once and in excellent condition.",
-    images: [
-      "/images/long_bluedress.jpg",
-      "/images/long_bluedress.jpg", // Using same image for demo
-      "/images/long_bluedress.jpg", // Using same image for demo
-      "/images/long_bluedress.jpg", // Using same image for demo
-    ],
-    owner: {
-      name: "NaYoung S.",
-      rating: 4.9,
-      responseTime: "Within 1 hour",
-    },
-  },
-  19: {
-    id: 19,
-    name: "Blue Midi Dress",
-    brand: "H&M",
-    size: "S",
-    category: "formal",
-    price: 5,
-    deposit: 10,
-    description: "Stylish blue midi dress from H&M. Perfect for both casual and formal occasions. The dress features a flattering silhouette and comfortable fit. In excellent condition with minimal wear.",
-    images: [
-      "/images/midi_bluedress.jpg",
-      "/images/midi_bluedress.jpg", // Using same image for demo
-      "/images/midi_bluedress.jpg", // Using same image for demo
-      "/images/midi_bluedress.jpg", // Using same image for demo
-    ],
-    owner: {
-      name: "NaYoung S.",
-      rating: 4.9,
-      responseTime: "Within 1 hour",
-    },
-  },
-  20: {
-    id: 20,
-    name: "Piglet Onesie",
-    brand: "Amazon",
-    size: "M",
-    category: "casual",
-    price: 5,
-    deposit: 10,
-    description: "Adorable Piglet onesie from Amazon. Perfect for costume parties, casual wear, or just staying cozy at home. Made of soft, comfortable material. In like-new condition.",
-    images: [
-      "/images/piglet_onsie.jpg",
-      "/images/piglet_onsie.jpg", // Using same image for demo
-      "/images/piglet_onsie.jpg", // Using same image for demo
-      "/images/piglet_onsie.jpg", // Using same image for demo
-    ],
-    owner: {
-      name: "NaYoung S.",
-      rating: 4.9,
-      responseTime: "Within 1 hour",
-    },
-  },
+interface RentalInfo {
+  id: number;
+  userId: string;
+  itemId: number;
+  rentedAt: string;
+  renterEmail: string;
+  renterName: string;
+  ownerEmail: string;
+  ownerName: string;
+  duration_days: number;
+  return_date: string;
+  status: string;
 }
 
 export async function trackButtonClick(
   userId: string,
   page: string,
   element: string,
-  metadata: {}
+  metadata: any = {}
 ) {
   await supabase.from('events').insert({
     user_id: userId,
@@ -112,12 +62,14 @@ export async function trackButtonClick(
 }
 
 export default function ItemDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const [item, setItem] = useState(null);  // Store the item data
-  const [loading, setLoading] = useState(true);  // To handle loading state
+  const [item, setItem] = useState<Item | null>(null);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedImage, setSelectedImage] = useState(0);  // Manage image selection
+  const [selectedImage, setSelectedImage] = useState(0);
   const [resolvedParams, setResolvedParams] = useState<{ id: string } | null>(null);
-  const { user, signOut, isAuthenticated } = useAuth(); // Get current user
+  const [selectedDuration, setSelectedDuration] = useState<string>("1");
+  const [rentalInfo, setRentalInfo] = useState<RentalInfo | null>(null);
+  const { user, signOut, isAuthenticated } = useAuth();
 
   useEffect(() => {
     const resolveParams = async () => {
@@ -130,7 +82,6 @@ export default function ItemDetailPage({ params }: { params: Promise<{ id: strin
 
   const { id } = resolvedParams || {}; 
 
-  // Fetch item data when the component mounts or when `id` changes
   useEffect(() => {
     if (!id) return;  
 
@@ -138,7 +89,7 @@ export default function ItemDetailPage({ params }: { params: Promise<{ id: strin
       try {
         setLoading(true);  
 
-        // Fetch item data from Supabase by id
+        // Fetch item data
         const { data, error } = await supabase
           .from("listing")  
           .select("*")
@@ -149,7 +100,20 @@ export default function ItemDetailPage({ params }: { params: Promise<{ id: strin
           throw new Error(error.message); 
         }
 
-        setItem(data);  
+        setItem(data);
+
+        // Check if item is currently rented
+        const { data: rentalData, error: rentalError } = await supabase
+          .from("rentals")
+          .select("*")
+          .eq("itemId", id)
+          .eq("status", "active")
+          .single();
+
+        if (rentalData && !rentalError) {
+          setRentalInfo(rentalData);
+        }
+
       } catch (err: any) {
         setError(err.message);  
       } finally {
@@ -171,50 +135,105 @@ export default function ItemDetailPage({ params }: { params: Promise<{ id: strin
       if (user) {
         await trackButtonClick(user.id, window.location.pathname, 'rent_this_item_button');
       }
+
+      const durationDays = parseInt(selectedDuration);
+      const startDate = new Date();
+      const endDate = new Date();
+      endDate.setDate(startDate.getDate() + durationDays);
   
-      // 1. Log rental in 'rentals' table
+      // Insert rental record with duration and return date
       const { error: rentalError } = await supabase.from("rentals").insert([
         {
           userId: user.id,
-          itemId: item.id,
-          rentedAt: new Date().toISOString(),
+          itemId: item?.id,
+          rentedAt: startDate.toISOString(),
           renterEmail: user.email,
           renterName: user.name,
-          ownerEmail: item.userEmail,
-          ownerName: item.userName
+          ownerEmail: item?.userEmail,
+          ownerName: item?.userName,
+          duration_days: durationDays,
+          return_date: endDate.toISOString(),
+          status: "active"
         },
       ]);
   
       if (rentalError) {
         throw new Error(`Failed to log rental: ${rentalError.message}`);
       }
+
+      // Send email notification to both renter and owner
+      const toEmails = `${item?.userEmail}, ${user.email}`;
+      const totalCost = (item?.fee || 0) * durationDays;
+
+      try {
+        await emailjs.send('service_nla0ot8', 'template_x867sks', {
+          owner_name: item?.userName,
+          renter_name: user.name,
+          item_name: item?.name,
+          owner_email: item?.userEmail,
+          renter_email: user.email,
+          rental_fee: totalCost,
+          security_deposit: item?.deposit,
+          rental_duration: durationDays,
+          rental_start_date: startDate.toLocaleDateString(),
+          rental_end_date: endDate.toLocaleDateString(),
+          email: toEmails,  
+        }, 'qa1eAXMv6yKYqBlBf');
+        
+        console.log('Email sent successfully!');
+      } catch (emailError) {
+        console.error('Email failed to send:', emailError);
+        // Don't fail the rental if email fails
+      }
   
-      // 2. Delete the item from the listings table
-      const { error: deleteError } = await supabase
-        .from("listing")
-        .delete()
-        .eq("id", item.id);
-  
-      if (deleteError) {
-        throw new Error(`Failed to delete item: ${deleteError.message}`);
+      alert(`Item rented for ${durationDays} day(s)! You'll receive an email with the owner's contact information shortly.`);
+      window.location.reload();
+    } catch (err: any) {
+      alert(`Error: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleMarkAsReturned = async () => {
+    if (!rentalInfo || !user) return;
+
+    try {
+      setLoading(true);
+
+      // Update rental status to returned
+      const { error } = await supabase
+        .from("rentals")
+        .update({ status: "returned" })
+        .eq("id", rentalInfo.id);
+
+      if (error) {
+        throw new Error(`Failed to mark as returned: ${error.message}`);
       }
 
-      const toEmails = `${item.userEmail}, ${user.email}`
+      // Send return confirmation email
+      try {
+        const toEmails = `${rentalInfo.ownerEmail}, ${rentalInfo.renterEmail}`;
+        
+        await emailjs.send('service_nla0ot8', 'template_return_notification', {
+          owner_name: rentalInfo.ownerName,
+          renter_name: rentalInfo.renterName,
+          item_name: item?.name,
+          owner_email: rentalInfo.ownerEmail,
+          renter_email: rentalInfo.renterEmail,
+          return_date: new Date().toLocaleDateString(),
+          rental_duration: rentalInfo.duration_days,
+          email: toEmails,
+        }, 'qa1eAXMv6yKYqBlBf');
+        
+        console.log('Return notification email sent!');
+      } catch (emailError) {
+        console.error('Return email failed to send:', emailError);
+        // Don't fail the return process if email fails
+      }
 
-      emailjs.send('service_nla0ot8', 'template_x867sks', {
-        owner_name: item.userName,
-        renter_name: user.name,
-        item_name: item.name,
-        owner_email: item.userEmail,
-        renter_email: user.email,
-        rental_fee: item.fee,
-        security_deposit: item.deposit,
-        email: toEmails,  
-      }, 'qa1eAXMv6yKYqBlBf');
-  
-      alert("You'll receive an email with the owner's contact information shortly. Please check your inbox!");
-      // Optional: redirect or refresh
-      // router.push("/"); or location.reload();
+      alert("Item marked as returned! It's now available for rent again.");
+      window.location.reload();
     } catch (err: any) {
       alert(`Error: ${err.message}`);
     } finally {
@@ -234,21 +253,38 @@ export default function ItemDetailPage({ params }: { params: Promise<{ id: strin
     return <div>Item not found</div>; 
   }
 
+  const isRented = rentalInfo !== null;
+  const selectedDurationPrice = item.fee * parseInt(selectedDuration);
+  const isMyRental = rentalInfo && user && rentalInfo.userId === user.id;
+  const isOwner = user && item.userEmail === user.email;
+
+  const durationOptions = [
+    { value: "1", label: "1 day", price: item.fee * 1 },
+    { value: "3", label: "3 days", price: item.fee * 3 },
+    { value: "7", label: "1 week", price: item.fee * 7 },
+    { value: "14", label: "2 weeks", price: item.fee * 14 },
+    { value: "30", label: "1 month", price: item.fee * 30 },
+  ];
+
   return (
     <main className="max-w-6xl mx-auto py-12 px-4">
       <div className="grid md:grid-cols-2 gap-8">
-        {/* Image Gallery */}
         <div className="space-y-4">
-          <div className="aspect-[3/4] rounded-lg overflow-hidden border">
+          <div className="aspect-[3/4] rounded-lg overflow-hidden border relative">
+            {isRented && (
+              <div className="absolute top-4 left-4 bg-red-600 text-white px-3 py-1 rounded-full text-sm font-medium z-10">
+                Currently Rented
+              </div>
+            )}
             <img
-            src={item.photo[selectedImage] || "/placeholder.svg"}
-            alt={item.name}
-            className="w-full h-full object-cover"
-          />
+              src={item.photo?.[selectedImage] || "/placeholder.svg"}
+              alt={item.name}
+              className={`w-full h-full object-cover ${isRented ? 'opacity-75' : ''}`}
+            />
           </div>
 
           <div className="flex gap-2 overflow-x-auto pb-2">
-            {item.photo.map((photoUrl, index) => (
+            {item.photo?.map((photoUrl, index) => (
               <button
                 key={index}
                 onClick={() => setSelectedImage(index)}
@@ -266,13 +302,25 @@ export default function ItemDetailPage({ params }: { params: Promise<{ id: strin
           </div>
         </div>
 
-        {/* Item Details */}
         <div className="space-y-6">
           <div>
             <h1 className="font-serif text-3xl font-bold">{item.name}</h1>
             <p className="text-gray-500">
               {item.brand} · Size {item.size}
             </p>
+            {isRented && rentalInfo && (
+              <div className="mt-2 space-y-1">
+                <p className="text-red-600 font-medium">
+                  Rented for {rentalInfo.duration_days} day(s)
+                </p>
+                <p className="text-red-600 text-sm">
+                  Available again on {new Date(rentalInfo.return_date).toLocaleDateString()}
+                </p>
+                <p className="text-gray-600 text-sm">
+                  Rented by: {rentalInfo.renterName}
+                </p>
+              </div>
+            )}
           </div>
 
           <div className="flex items-center justify-between">
@@ -286,9 +334,47 @@ export default function ItemDetailPage({ params }: { params: Promise<{ id: strin
 
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-full bg-gray-200"></div>
-              <span>{item.owner}</span>
+              <span>{item.userName || item.owner}</span>
             </div>
           </div>
+
+          {/* Rental Status Card */}
+          {isRented && (
+            <Card className="border-red-200 bg-red-50">
+              <CardContent className="p-4">
+                <h3 className="font-medium text-red-800 mb-2">Rental Information</h3>
+                <div className="text-sm text-red-700 space-y-1">
+                  <p>• Rental Duration: {rentalInfo?.duration_days} day(s)</p>
+                  <p>• Rented on: {rentalInfo ? new Date(rentalInfo.rentedAt).toLocaleDateString() : ''}</p>
+                  <p>• Available on: {rentalInfo ? new Date(rentalInfo.return_date).toLocaleDateString() : ''}</p>
+                  <p>• Current Renter: {rentalInfo?.renterName}</p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {!isRented && (
+            <Card>
+              <CardContent className="p-4">
+                <h3 className="font-medium mb-3">Select Rental Duration</h3>
+                <Select value={selectedDuration} onValueChange={setSelectedDuration}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Choose duration" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {durationOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label} - ${option.price}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-sm text-gray-600 mt-2">
+                  Total cost: ${selectedDurationPrice} + ${item.deposit} deposit
+                </p>
+              </CardContent>
+            </Card>
+          )}
 
           <Tabs defaultValue="details">
             <TabsList className="grid w-full grid-cols-3">
@@ -331,7 +417,7 @@ export default function ItemDetailPage({ params }: { params: Promise<{ id: strin
                   </div>
                   <div>
                     <p className="font-medium">Rental Period</p>
-                    <p className="text-sm text-gray-500">1-14 days</p>
+                    <p className="text-sm text-gray-500">1-30 days</p>
                   </div>
                 </div>
 
@@ -363,14 +449,38 @@ export default function ItemDetailPage({ params }: { params: Promise<{ id: strin
               <div className="flex items-center gap-4">
                 <div className="w-16 h-16 rounded-full bg-gray-200"></div>
                 <div>
-                  <p className="font-serif font-medium text-lg">{item.userName}</p>
+                  <p className="font-serif font-medium text-lg">{item.userName || item.owner}</p>
                 </div>
               </div>
             </TabsContent>
           </Tabs>
 
-          <div className="pt-6">
-            <Button className="w-full bg-[#8c1515] hover:bg-[#6f1111] text-white" onClick={handleRentItem}>Rent This Item</Button>
+          <div className="pt-6 space-y-2">
+            {isRented ? (
+              <>
+                <Button className="w-full bg-gray-400 text-white" disabled>
+                  Currently Rented - Available {rentalInfo ? new Date(rentalInfo.return_date).toLocaleDateString() : ''}
+                </Button>
+                {(isMyRental || isOwner) && (
+                  <Button 
+                    variant="outline"
+                    className="w-full border-green-600 text-green-600 hover:bg-green-50" 
+                    onClick={handleMarkAsReturned}
+                    disabled={loading}
+                  >
+                    {loading ? 'Processing...' : 'Mark as Returned'}
+                  </Button>
+                )}
+              </>
+            ) : (
+              <Button 
+                className="w-full bg-[#8c1515] hover:bg-[#6f1111] text-white" 
+                onClick={handleRentItem}
+                disabled={loading}
+              >
+                {loading ? 'Processing...' : `Rent for ${selectedDuration} day(s) - $${selectedDurationPrice}`}
+              </Button>
+            )}
           </div>
         </div>
       </div>

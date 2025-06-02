@@ -10,73 +10,86 @@ interface ClothingItem {
   name: string;
   brand: string;
   size: string;
-  price: number;
+  fee: number;
   deposit: number;
-  image: string;
+  photo: string[];
   owner: string;
-  sold?: boolean; // optional for backward compatibility
+  rental_status?: string;
+  rental_end_date?: string;
 }
 
 interface ClothingCardProps {
   item: ClothingItem;
 }
 
-
-
 export default function ClothingCard({ item }: ClothingCardProps) {
   const { user } = useAuth();
 
   const handleViewDetailsClick = async () => {
-    if (!user) return;
-    await trackButtonClick(user.id, window.location.pathname, 'view_details_button', {
-      itemId: item.id,
-      itemName: item.name,
-    });
+    if (user) {
+      await trackButtonClick(user.id, window.location.pathname, 'view_details_button', {
+        item_id: item.id,
+        item_name: item.name
+      });
+    }
   };
 
+  const isRented = item.rental_status === 'rented';
+  const rentedUntil = item.rental_end_date ? new Date(item.rental_end_date).toLocaleDateString() : null;
+
   return (
-    <Card
-      className={`overflow-hidden transition-all group border-black relative ${
-        item.sold ? "opacity-60 grayscale" : ""
-      }`}
-    >
-      <div className="aspect-[3/4] relative overflow-hidden">
+    <Card className="overflow-hidden border-0 shadow-sm hover:shadow-md transition-shadow">
+      <div className="relative">
         <img
-          src={item.photo?.[0] || item.image || "/placeholder.svg"}
+          src={item.photo?.[0] || "/placeholder.svg"}
           alt={item.name}
-          className="w-full h-full object-cover transition-transform group-hover:scale-105 duration-300"
+          className={`w-full h-64 object-cover ${isRented ? 'opacity-75' : ''}`}
         />
-        <Badge variant="accent" className="absolute top-2 right-2">
-          Size {item.size}
-        </Badge>
-        {item.sold && (
-          <span className="absolute top-2 left-2 bg-red-600 text-white text-xs font-bold px-3 py-1 rounded shadow z-10">
-            RENTED OUT
-          </span>
+        <div className="absolute top-2 right-2">
+          <Badge variant="secondary" className="bg-black text-white">
+            SIZE {item.size}
+          </Badge>
+        </div>
+        {isRented && (
+          <div className="absolute top-2 left-2">
+            <Badge className="bg-red-600 text-white">
+              RENTED
+            </Badge>
+          </div>
         )}
       </div>
-
-      <CardContent className="pt-4">
-        <div className="flex justify-between items-start mb-2">
-          <div>
-            <h3 className="font-serif font-semibold text-lg text-black">
-              {item.name}
-            </h3>
-            <p className="text-sm text-black">{item.brand}</p>
-          </div>
-          <div className="text-right">
-            <p className="font-serif font-bold text-black">${item.fee}/day</p>
-            <p className="text-xs text-black">${item.deposit} deposit</p>
-          </div>
-        </div>
+      <CardContent className="p-4">
+        <h3 className="font-serif font-semibold text-lg text-black">
+          {item.name}
+        </h3>
+        <p className="text-sm text-black">{item.brand}</p>
+        {isRented && rentedUntil && (
+          <p className="text-xs text-red-600 mt-1">
+            Until {rentedUntil}
+          </p>
+        )}
       </CardContent>
-
       <CardFooter className="pt-0">
-        <Link href={`/item/${item.id}`} className="w-full">
-          <HeroButton className="w-full" variant="default" size="sm" onClick={handleViewDetailsClick}>
-            View Details
-          </HeroButton>
-        </Link>
+        <div className="w-full">
+          <div className="text-right">
+            <p className={`font-serif font-bold text-black ${isRented ? 'opacity-60' : ''}`}>
+              ${item.fee}/day
+            </p>
+            <p className={`text-xs text-black ${isRented ? 'opacity-60' : ''}`}>
+              ${item.deposit} deposit
+            </p>
+          </div>
+          <Link href={`/item/${item.id}`} className="w-full">
+            <HeroButton 
+              className={`w-full ${isRented ? 'bg-gray-400 hover:bg-gray-400' : 'bg-[#8c1515] hover:bg-[#6f1111]'} text-white`}
+              variant={isRented ? "secondary" : "default"}
+              size="sm" 
+              onClick={handleViewDetailsClick}
+            >
+              View Details
+            </HeroButton>
+          </Link>
+        </div>
       </CardFooter>
     </Card>
   );
