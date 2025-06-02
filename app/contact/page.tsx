@@ -176,7 +176,7 @@ export default function ContactPage() {
         </div>
         
         {/* FAQ Link */}
-        <div className="mt-12 bg-gradient-to-r from-cc-dark-red to-cc-red rounded-2xl p-8 text-center">
+        <div className="mt-12 bg-red-800 rounded-2xl p-8 text-center">
           <h3 className="font-serif text-2xl font-semibold mb-4 text-white">Looking for Quick Answers?</h3>
           <p className="text-white/90 mb-6 text-lg">
             Check out our FAQ section for answers to common questions about rentals, payments, and platform features.
@@ -191,7 +191,12 @@ export default function ContactPage() {
             Visit FAQ
           </a>
         </div>
+
+        
+
       </div>
     </div>
+
+
   );
 }
